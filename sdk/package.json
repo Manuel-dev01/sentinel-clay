@@ -1,0 +1,22 @@
+{
+  "name": "@sentinel/sdk",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Sentinel off-chain authorization layer: the agent PROPOSES; Move (re-)enforces. AuthorizationProvider (LocalWitness default, Seal adapter) + PaymentClient.",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "node --import tsx --test test/*.test.ts",
+    "smoke": "tsx scripts/smoke.ts"
+  },
+  "dependencies": {
+    "@mysten/seal": "latest",
+    "@mysten/sui": "latest",
+    "js-sha3": "latest"
+  },
+  "devDependencies": {
+    "@types/node": "latest",
+    "tsx": "latest",
+    "typescript": "latest"
+  }
+}

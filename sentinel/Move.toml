@@ -5,6 +5,15 @@ edition = "2024"         # edition = "legacy" to use legacy (pre-2024) Move
 # authors = ["..."]      # e.g., ["Joe Smith (joesmith@noemail.com)", "John Snow (johnsnow@noemail.com)"]
 
 [dependencies]
+# DeepBook is VENDORED at vendor/deepbook with a corrected Published.toml: its committed testnet
+# published-at upstream is STALE (0x74cd56, an old upgrade the live pools reject via
+# `pool::load_inner` EPackageVersionDisabled). The vendored copy points published-at at the
+# currently-enabled package 0xa3886a (same lineage original-id 0xfb28c4, so Pool<B,Q> types are
+# unchanged), so a fresh clone builds + links correctly with NO ~/.move cache edit and NO
+# --allow-dirty. (sui 1.74 ignores [dep-replacements.<env>] published-at overrides, so we vendor.)
+# token (DEEP) links correctly from git as-is, and dedupes with vendor/deepbook's git token dep.
+deepbook = { local = "vendor/deepbook" }
+token = { git = "https://github.com/MystenLabs/deepbookv3.git", subdir = "packages/token", rev = "main" }
 
 # Read more about the package management system options:
 # https://docs.sui.io/guides/developer/packages/move-package-management
