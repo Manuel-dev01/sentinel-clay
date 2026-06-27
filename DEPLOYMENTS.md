@@ -19,6 +19,8 @@ On-chain deployment record. One row per publish. Keep newest at top.
 ## Key object IDs
 | Object | ID | Stage |
 |--------|----|-------|
+| **Live app (Vercel)** | https://sentinel-clay-web.vercel.app/ | 5 |
+| **App market registry** (shared, DEEP_SUI allowlisted; arming uses this) | `0x8b49d0d7afde529a8784f3f255b1fa2168519988aae242f5bf3a881b6a7f7c1f` | 5 |
 | **Package (current)** | `0x7a7ee7186ccb69b2b250e7b08fc31b8ccfadae9a7596a352112f7aa3e72a77f9` | 4 |
 | UpgradeCap (current) | `0x0250e15d0b4d32f859473813d31d3069062bd9a4e719240ff7aefc1b0d047cdf` | 4 |
 | Package (Stage 3.1) | `0xd3dc1607b52c49864e7298846dd0440ae8f49e3cc130babacc267697718d9a2e` | 3.1 |

@@ -13,8 +13,10 @@ export const EXPLORER_OBJ = (id: string) => `https://suiscan.xyz/testnet/object/
 
 export const ENOKI_API_KEY = process.env.NEXT_PUBLIC_ENOKI_API_KEY ?? '';
 export const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ?? '';
-/** True once Enoki + Google are configured; otherwise the app uses the local demo signer. */
-export const ENOKI_ENABLED = Boolean(ENOKI_API_KEY && GOOGLE_CLIENT_ID);
+/** Force the local demo signer even when Enoki creds are present (for local dev without the OAuth popup). */
+export const FORCE_LOCAL = process.env.NEXT_PUBLIC_FORCE_LOCAL === '1';
+/** True once Enoki + Google are configured (and not force-local); otherwise the app uses the demo signer. */
+export const ENOKI_ENABLED = Boolean(ENOKI_API_KEY && GOOGLE_CLIENT_ID) && !FORCE_LOCAL;
 
 export const DEEPBOOK = {
   core: '0xa3886aaa8aa831572dd39549242ca004a438c3a55967af9f0387ad2b01595068',

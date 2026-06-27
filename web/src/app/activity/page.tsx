@@ -1,12 +1,16 @@
 'use client';
 
 import Link from 'next/link';
+import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { AppShell } from '@/components/AppShell';
 import { useMandate } from '@/lib/mandateStore';
+import { useSigner } from '@/lib/signer';
 import { suiClient } from '@/lib/suiClient';
 import { PACKAGE_ID, EXPLORER } from '@/lib/env';
 import { fmtSui, shortAddr } from '@/lib/format';
+import { getAudit, blobUrl, type AuditEntry } from '@/lib/auditStore';
+import { decryptEntry } from '@/lib/audit';
 
 interface Settled {
   digest: string;
@@ -96,7 +100,70 @@ export default function ActivityPage() {
             </div>
           </div>
         ))}
+
+        <WalrusAuditTrail mandateId={mandate.mandateId} owner={mandate.owner} />
       </div>
     </AppShell>
+  );
+}
+
+function WalrusAuditTrail({ mandateId, owner }: { mandateId: string; owner: string }) {
+  const { signMessage } = useSigner();
+  const [entries, setEntries] = useState<AuditEntry[]>([]);
+  const [open, setOpen] = useState<Record<number, string>>({});
+
+  useEffect(() => {
+    setEntries(getAudit(mandateId));
+    const i = setInterval(() => setEntries(getAudit(mandateId)), 4000);
+    return () => clearInterval(i);
+  }, [mandateId]);
+
+  async function reveal(e: AuditEntry) {
+    setOpen((o) => ({ ...o, [e.seq]: 'decrypting…' }));
+    try {
+      const rec = await decryptEntry(e, owner, signMessage);
+      setOpen((o) => ({ ...o, [e.seq]: JSON.stringify(rec, null, 1) }));
+    } catch (err: any) {
+      setOpen((o) => ({ ...o, [e.seq]: `decrypt unavailable (${err?.message ?? err}); the ciphertext is still on Walrus.` }));
+    }
+  }
+
+  return (
+    <div className="mt-4">
+      <div className="mb-2 font-mono text-[11px] font-semibold tracking-[0.12em] text-muted">WALRUS AUDIT TRAIL</div>
+      <div className="mb-3 border border-hairsoft bg-panel p-4 font-mono text-[12px] text-sage">
+        Every proposal + verdict is written to <span className="text-cream">Walrus</span> (immutable),
+        Seal-encrypted for the mandate owner. The blob ids below are verifiable on the public aggregator.
+      </div>
+      {entries.length === 0 ? (
+        <div className="border border-dashed border-hairsoft p-6 text-center font-mono text-[12px] text-dim">
+          No audit blobs yet — approve or reject a proposal to write one.
+        </div>
+      ) : (
+        <div className="flex flex-col gap-2">
+          {entries.map((e) => (
+            <div key={e.seq + e.blobId} className="border border-hairsoft bg-panel p-4">
+              <div className="flex flex-wrap items-center gap-3 font-mono text-[12px]">
+                <span className={`px-2 py-1 text-[10px] font-bold ${e.record.verdict === 'APPROVED' ? 'text-approve' : 'text-abort'} border ${e.record.verdict === 'APPROVED' ? 'border-approve/40' : 'border-abort/40'}`}>
+                  {e.record.verdict}
+                </span>
+                <span className="text-cream">#{e.seq}</span>
+                <span className="text-muted">
+                  {fmtSui(e.record.intent.amount as any)} SUI {e.record.code ? `· code ${e.record.code}` : ''}
+                </span>
+                <span className={`text-[10px] ${e.encrypted ? 'text-approve' : 'text-gold'}`}>{e.encrypted ? 'Seal-encrypted' : 'plaintext'}</span>
+                <a href={blobUrl(e.blobId)} target="_blank" rel="noreferrer" className="ml-auto text-gold">
+                  blob {shortAddr(e.blobId, 8, 6)} ↗
+                </a>
+                <button onClick={() => reveal(e)} className="border border-hair px-2.5 py-1 text-[11px] text-muted hover:text-cream">
+                  owner-decrypt
+                </button>
+              </div>
+              {open[e.seq] && <pre className="mt-2 overflow-auto border-l-2 border-gold/40 bg-forest p-2 font-mono text-[11px] text-sage">{open[e.seq]}</pre>}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }

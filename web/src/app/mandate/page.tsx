@@ -7,7 +7,7 @@ import { Transaction } from '@mysten/sui/transactions';
 import { AppShell } from '@/components/AppShell';
 import { useSigner } from '@/lib/signer';
 import { useMandate } from '@/lib/mandateStore';
-import { deriveProvider } from '@/lib/witnessSeed';
+import { providerForOwner } from '@/lib/witnessSeed';
 import { APP_REGISTRY_ID, CATEGORIES, EXPIRIES, MARKETS, PACKAGE_ID } from '@/lib/env';
 import { fmtUsd, mistFromSui } from '@/lib/format';
 
@@ -48,7 +48,7 @@ export default function MandatePage() {
     setBusy(true);
     setErr('');
     try {
-      const provider = await deriveProvider(signMessage);
+      const provider = providerForOwner(address);
       const commitment = await provider.initialCommitment();
       const tx = new Transaction();
       tx.moveCall({

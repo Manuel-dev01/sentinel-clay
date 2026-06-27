@@ -12,19 +12,19 @@
 
 **An agent-native, key-safe DeFi treasury on Sui.**
 
-[Demo Video](#) · [Live App]({{WALRUS_SITE_URL}}) · [Package ID](#deployments) · [Architecture](#architecture)
+[Live App](https://sentinel-clay-web.vercel.app/) · [Package ID](#deployments) · [Architecture](#architecture)
 
 </div>
 
-> **Build status (2026-06-26):** Stages 0–4 complete & live on Sui testnet — mandate + policy
-> core, one-shot `Witness` + replay protection, a venue adapter (MockPool + DeepBook v3), and the
-> **Seal authorization adapter** + off-chain SDK. **32 Move tests + 6 TS tests** passing. A
-> compliant trade **fills on real DeepBook v3** — `pay_real` swapped 0.5 SUI for **20.00 DEEP**
-> (`5SMBQo8B…`). Seal gates the one-shot witness secret: the on-chain `seal_approve` predicate
-> (what the key servers dry-run) passes a compliant intent (`3mVozzJP…`) and **aborts an over-cap
-> one** (`E_OVER_CAP`, `DcUUFG8b…`) — through the *same* `policy::check` as `pay`. All rogue-agent
-> aborts are real, committed, explorer-visible txs ([Deployments](#deployments)). zkLogin + the
-> Walrus site are the remaining stage (5), marked _pending_ below.
+> **Build status (2026-06-27):** Stages 0–5 complete & live — a full Next.js app on
+> **[sentinel-clay-web.vercel.app](https://sentinel-clay-web.vercel.app/)** over the testnet Move
+> package. **Google login (zkLogin via Enoki) with sponsored gas**, a mandate builder that arms an
+> on-chain policy in one signature, a **keyless AI agent** (DeepSeek "Yield Hunter") that reads
+> DeepBook + the mandate and *proposes* trades, an approve→`pay_real` settle path, and a **Walrus**
+> audit trail of every proposal+verdict. **32 Move tests + 6 TS tests** pass; a compliant trade
+> **fills on real DeepBook v3** (`pay_real` 0.5 SUI → **20 DEEP**, `5SMBQo8B…`); rogue/over-cap and
+> replayed trades **abort on-chain** (`E_OVER_CAP` `DcUUFG8b…`, `E_REPLAY`). The agent process holds
+> **no key** — it only proposes; the user's zkLogin session signs; Move enforces.
 
 ---
 
@@ -43,12 +43,12 @@ You fund a self-custodial **mandate wallet** and set human-readable rules — *m
 | Step | What happens | Result | Status |
 |------|--------------|--------|--------|
 | – | Seal gates the witness secret: agent decrypts the authorization only if `seal_approve` passes; rogue intent denied | ⛔/✅ off-chain gate = on-chain law | **live** (predicate proven: `3mVozzJP…` / `DcUUFG8b…`) |
-| 1 | Log in with Google (zkLogin), no wallet, no SUI | ✅ onboarded | _pending (Stage 5)_ |
-| 2 | Set mandate: $50/day, stables only | ✅ on-chain shared `Mandate` | **live** |
-| 3 | Agent proposes a compliant $40 trade | ✅ settles + fills, `PaymentSettled{base_out}` | **live on real DeepBook v3** (0.5 SUI → 20 DEEP, `FSiwLoHG…`; MockPool fill also live) |
-| 4 | Tampered agent attempts a $500 over-cap trade | ⛔ aborts on-chain `E_OVER_CAP` | **live on testnet** |
+| 1 | Log in with Google (zkLogin), no wallet, no seed phrase; gas sponsored by Enoki | ✅ onboarded | **live in app** (Enoki + dapp-kit) |
+| 2 | Set mandate (budget, stables, markets, expiry) → arm in one signature | ✅ on-chain shared `Mandate` | **live** |
+| 3 | DeepSeek agent proposes a compliant trade → Approve | ✅ settles + fills, `PaymentSettled{base_out}` | **live on real DeepBook v3** (0.5 SUI → 20 DEEP, `5SMBQo8B…`) |
+| 4 | Tampered agent attempts an over-cap trade | ⛔ aborts on-chain `E_OVER_CAP` | **live on testnet** (`DcUUFG8b…`) |
 | 5 | Agent replays a used authorization | ⛔ aborts on-chain `E_REPLAY` | **live on testnet** |
-| 6 | Open the Walrus audit log | 🔍 every verdict, immutable | _pending (Stage 5)_ |
+| 6 | Open the Walrus audit log | 🔍 every proposal+verdict, immutable on Walrus | **live in app** (Seal-encrypted blobs) |
 
 Real testnet transactions (committed, explorer-visible): **real DeepBook fill** `FSiwLoHG…`
 (0.5 SUI → 20.00 DEEP); MockPool fill `38Q1RQwc…` (`base_out:80`); aborts `E_OVER_CAP` on the
@@ -69,9 +69,10 @@ real-DeepBook path `EGDZtuoc…` (and mock `ByywWqRL…`), `E_MARKET` tx `FfAzTn
 |-----------|------------------|
 | **Move (Sui)** | Mandate object, dry-runnable `seal_approve` predicate, one-shot `Witness` resource (no `copy`/`drop`/`store`), atomic check-rotate-transfer |
 | **Seal** | Threshold encryption gates **release of the one-shot witness secret**: `seal_approve` (same `policy::check` as `pay`) decides whether key servers release the preimage; rogue intent denied off-chain + re-aborted on-chain. Also encrypts the audit log (owner-only). _wired in `sdk/`; on-chain predicate proven live_ |
-| **DeepBook v3** | On-chain trade execution venue (+ optional hot-potato flash-loan arb) |
-| **Walrus** | Immutable audit log of every proposal + verdict; agent memory |
-| **zkLogin + sponsored tx** | Google login, zero-SUI onboarding |
+| **DeepBook v3** | On-chain trade execution venue; the agent reads live mid/quote via dev-inspect |
+| **Walrus** | Immutable audit log — every proposal+verdict is a Seal-encrypted blob (testnet publisher/aggregator). _live in app_ |
+| **zkLogin + Enoki sponsored tx** | Google login, no seed phrase, gas sponsored — judge needs no wallet/SUI. _live in app (dapp-kit + @mysten/enoki)_ |
+| **DeepSeek agent** | The keyless "Yield Hunter" runs server-side (`/api/agent`), proposes trades with plain-English rationale; never holds a key |
 | **Nautilus** *(stretch)* | Agent strategy in a TEE with on-chain attestation |
 
 ## Move highlights (for reviewers)
@@ -99,37 +100,57 @@ Run: `sui move test`
 
 ## Deployments
 
-| Network | Package ID | Date |
-|---------|-----------|------|
-| Testnet (Stage 4, current — Seal adapter + vendored clean build) | `0x7a7ee7186ccb69b2b250e7b08fc31b8ccfadae9a7596a352112f7aa3e72a77f9` | 2026-06-26 |
-| Testnet (Stage 3.1 — real DeepBook fill) | `0xd3dc1607b52c49864e7298846dd0440ae8f49e3cc130babacc267697718d9a2e` | 2026-06-26 |
-| Mainnet | `{{MAINNET_PACKAGE_ID}}` *(pending — Stage 6)* | — |
+| What | ID / URL | Date |
+|------|----------|------|
+| **Live app** | https://sentinel-clay-web.vercel.app/ | 2026-06-27 |
+| Testnet package (current — Seal adapter, vendored clean build) | `0x7a7ee7186ccb69b2b250e7b08fc31b8ccfadae9a7596a352112f7aa3e72a77f9` | 2026-06-26 |
+| App market registry (shared, DEEP_SUI allowlisted) | `0x8b49d0d7afde529a8784f3f255b1fa2168519988aae242f5bf3a881b6a7f7c1f` | 2026-06-27 |
+| Testnet package (Stage 3.1 — real DeepBook fill) | `0xd3dc1607b52c49864e7298846dd0440ae8f49e3cc130babacc267697718d9a2e` | 2026-06-26 |
 
 Fresh Package ID per checkpoint during development; full history + runtime object IDs and the
 live abort/replay tx digests are in [DEPLOYMENTS.md](DEPLOYMENTS.md).
 
-## Run it locally
-
-```bash
-# Move package — DeepBook is vendored (vendor/deepbook) with a corrected Published.toml, so this
-# builds + links to the live testnet DeepBook on a fresh clone with NO --allow-dirty, no cache edits.
-cd sentinel
-sui move build
-sui move test                       # 32 passed
-sui client publish --gas-budget 200000000
-
-# Off-chain SDK (AuthorizationProvider: LocalWitness + Seal; PaymentClient; audit log)
-cd ../sdk
-pnpm install
-pnpm test                           # 6 passed (keccak↔Move parity, seal_id codec)
-SENTINEL_PKG=0x7a7e… SUI_PRIVATE_KEY=… pnpm smoke   # optional live run (needs a funded signer)
+## Repo layout
+```
+sentinel/   Move package (mandate · policy · payment · seal_policy · execution) + vendored deepbook
+sdk/        TypeScript: AuthorizationProvider (LocalWitness + Seal), PaymentClient, SealAuditLog
+web/        Next.js app — landing, mandate builder, keyless agent, settle, Walrus audit
 ```
 
-{{ENV_VARS — Seal, DeepBook, Enoki/gas-station, Walrus config}}
+## Run it locally
+```bash
+# Move package — DeepBook is vendored (vendor/deepbook, corrected Published.toml) so a fresh clone
+# builds + links to live testnet DeepBook with NO --allow-dirty and no cache edits.
+cd sentinel && sui move build && sui move test          # 32 passed
+
+# Whole workspace (sdk + web)
+pnpm install
+pnpm --filter @sentinel/sdk test                         # 6 passed (keccak↔Move parity, seal_id codec)
+pnpm --filter web dev                                    # → http://localhost:3000
+```
+Without any keys the app runs on a **self-custodial demo wallet** (browser keypair + faucet) and the
+agent uses a deterministic heuristic — so it works end-to-end out of the box. Add the keys below to
+switch on Google/zkLogin onboarding and the DeepSeek agent.
+
+### Environment (`web/.env.local`; see `web/.env.example`)
+| Var | Purpose | Where |
+|-----|---------|-------|
+| `NEXT_PUBLIC_ENOKI_API_KEY` / `ENOKI_SECRET_KEY` | zkLogin + sponsored gas | [portal.enoki.mystenlabs.com](https://portal.enoki.mystenlabs.com) |
+| `NEXT_PUBLIC_GOOGLE_CLIENT_ID` | Google OAuth (register it in Enoki too) | [console.cloud.google.com](https://console.cloud.google.com) |
+| `DEEPSEEK_API_KEY` | the Yield Hunter agent (server-only) | [platform.deepseek.com](https://platform.deepseek.com) |
+| `NEXT_PUBLIC_SENTINEL_PKG`, `NEXT_PUBLIC_APP_REGISTRY` | on-chain ids (defaults shipped) | — |
+
+> **Deploying to Vercel:** set these in **Project → Settings → Environment Variables** (`.env.local`
+> is local-only and gitignored), then redeploy. Add your Vercel URL to the Google OAuth origins and the
+> Enoki project's allowed origins. `NEXT_PUBLIC_FORCE_LOCAL=1` forces the demo wallet for local dev.
+
+## Demo path
+Google login (no wallet/SUI) → set mandate → **arm** (sponsored, one signature) → faucet a little
+trade-SUI → agent **proposes** a DeepBook trade → **Approve** → settles + fills → **tampered agent**
+over-cap → aborts `E_OVER_CAP` → **replay** → aborts `E_REPLAY` → **Activity** shows the Walrus audit trail.
 
 ## What's next
-
-{{ROADMAP — mainnet hardening, Nautilus-attested strategies, multi-asset mandates, audit}}
+Mainnet deploy · Nautilus-attested agent strategy · multi-asset mandate vault (Model B) · Walrus Site + SuiNS.
 
 ## Built for
 

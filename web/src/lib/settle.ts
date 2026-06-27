@@ -1,6 +1,6 @@
 import { PaymentClient } from '@sentinel/sdk';
 import { suiClient } from './suiClient';
-import { deriveProvider } from './witnessSeed';
+import { providerForOwner } from './witnessSeed';
 import { PACKAGE_ID, DEEPBOOK } from './env';
 import type { Proposal } from './agentTypes';
 import type { ArmedMandate } from './mandateStore';
@@ -11,10 +11,9 @@ import type { ExecResult } from './signer';
 export async function settleProposal(
   p: Proposal,
   mandate: ArmedMandate,
-  signMessage: (m: Uint8Array) => Promise<{ signature: string; bytes: string }>,
   signExecute: (tx: any) => Promise<ExecResult>,
 ): Promise<ExecResult> {
-  const provider = await deriveProvider(signMessage);
+  const provider = providerForOwner(mandate.owner);
   const intent = {
     mandateId: mandate.mandateId,
     poolId: p.poolId,

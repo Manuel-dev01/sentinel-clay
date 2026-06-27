@@ -10,6 +10,7 @@ import { useMandate } from '@/lib/mandateStore';
 import { readMandate, effectiveSpent, type MandateState } from '@/lib/onchain';
 import { buildChecks, evaluateOnChain, codeLabel, type Check } from '@/lib/predicate';
 import { settleProposal, abortCodeFromError } from '@/lib/settle';
+import { recordVerdict } from '@/lib/audit';
 import { MARKETS, PACKAGE_ID, EXPLORER } from '@/lib/env';
 import type { Proposal } from '@/lib/agentTypes';
 import { fmtSui, shortAddr } from '@/lib/format';
@@ -29,6 +30,8 @@ const DEEP_DP = 1e6;
 export default function Dashboard() {
   const { mandate, setMandate } = useMandate();
   const { signMessage, signExecute, busy } = useSigner();
+  const audit = (p: Proposal, verdict: 'APPROVED' | 'ABORTED', code?: number, txDigest?: string) =>
+    recordVerdict({ mandateId: mandate!.mandateId, owner: mandate!.owner, signMessage, p, verdict, code, txDigest });
   const [rows, setRows] = useState<Row[]>([]);
   const [thinking, setThinking] = useState(false);
   const [err, setErr] = useState('');
@@ -102,7 +105,7 @@ export default function Dashboard() {
     const row = rows[idx];
     setRows((rs) => rs.map((r, i) => (i === idx ? { ...r, status: 'settling' } : r)));
     try {
-      const res = await settleProposal(row.p, mandate!, signMessage, signExecute);
+      const res = await settleProposal(row.p, mandate!, signExecute);
       const ok = res.status === 'success';
       const settled = (res.events ?? []).find((e: any) => String(e.type).includes('PaymentSettled'));
       setRows((rs) =>
@@ -112,10 +115,13 @@ export default function Dashboard() {
             : r,
         ),
       );
+      audit(row.p, ok ? 'APPROVED' : 'ABORTED', undefined, res.digest);
       mq.refetch();
     } catch (e: any) {
       const msg = e?.message ?? String(e);
-      setRows((rs) => rs.map((r, i) => (i === idx ? { ...r, status: 'aborted', code: abortCodeFromError(msg) ?? undefined } : r)));
+      const code = abortCodeFromError(msg) ?? undefined;
+      setRows((rs) => rs.map((r, i) => (i === idx ? { ...r, status: 'aborted', code } : r)));
+      audit(row.p, 'ABORTED', code);
     }
   }
 
