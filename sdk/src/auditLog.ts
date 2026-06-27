@@ -2,9 +2,9 @@ import { SealClient, SessionKey } from '@mysten/seal';
 import { Transaction } from '@mysten/sui/transactions';
 import type { SuiJsonRpcClient } from '@mysten/sui/jsonRpc';
 import type { Signer } from '@mysten/sui/cryptography';
-import { SEAL_TESTNET_KEY_SERVERS } from './config.js';
-import { encodeSealId, encodeSealIdHex } from './sealId.js';
-import type { PaymentIntentFields } from './provider.js';
+import { SEAL_TESTNET_KEY_SERVERS } from './config';
+import { encodeSealId, encodeSealIdHex } from './sealId';
+import type { PaymentIntentFields } from './provider';
 
 export interface AuditRecord {
   seq: number;

@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing:border-box; }
+  body { margin:0; background:#0E3A2C; color:#F0ECDD; font-family:'Archivo',sans-serif; -webkit-font-smoothing:antialiased; }
+  ::selection { background:#E8B24A; color:#10130A; }
+  @keyframes cubeSpin { from { transform:rotateX(-22deg) rotateY(0deg); } to { transform:rotateX(-22deg) rotateY(360deg); } }
+  @keyframes haloSpin { to { transform:rotate(360deg); } }
+  @keyframes rowIn { from { opacity:0; transform:translateY(-10px); } to { opacity:1; transform:none; } }
+  @keyframes slotGlow { 0%,100% { opacity:.85; } 50% { opacity:1; } }
+  @keyframes floatY { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-10px); } }
+  @keyframes fillMeter { from { width:0; } to { width:96.4%; } }
+</style>
+</helmet>
+
+<div data-screen-label="Reserve Landing" style="width:100%; overflow-x:hidden;">
+
+  <!-- ===== NAV ===== -->
+  <div style="position:sticky; top:0; z-index:50; background:#0E3A2C; border-bottom:1px solid rgba(255,255,255,.14);">
+    <div style="max-width:1180px; margin:0 auto; padding:18px 40px; display:flex; align-items:center; justify-content:space-between;">
+      <div style="display:flex; align-items:center; gap:12px;">
+        <div style="position:relative; width:26px; height:26px; background:#F0ECDD; clip-path:polygon(30% 0,70% 0,100% 30%,100% 70%,70% 100%,30% 100%,0 70%,0 30%); display:flex; align-items:center; justify-content:center;"><div style="width:17px; height:17px; background:#0E3A2C; clip-path:polygon(30% 0,70% 0,100% 30%,100% 70%,70% 100%,30% 100%,0 70%,0 30%); display:flex; align-items:center; justify-content:center;"><div style="width:7px; height:7px; background:#E8B24A; transform:rotate(45deg);"></div></div></div>
+        <div style="font:800 18px/1 'Archivo',sans-serif; letter-spacing:.01em; color:#F0ECDD;">SENTINEL</div>
+      </div>
+      <div style="display:flex; align-items:center; gap:34px;">
+        <a style="font:500 14px/1 'Archivo',sans-serif; color:#CFD8CE; text-decoration:none;">Product</a>
+        <a style="font:500 14px/1 'Archivo',sans-serif; color:#CFD8CE; text-decoration:none;">Policy</a>
+        <a style="font:500 14px/1 'Archivo',sans-serif; color:#CFD8CE; text-decoration:none;">Docs</a>
+        <a style="font:700 13px/1 'Archivo',sans-serif; color:#10130A; background:#E8B24A; padding:11px 18px; text-decoration:none;">Launch app</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== HERO · THE BUDGET IS THE HERO ===== -->
+  <div style="max-width:1180px; margin:0 auto; padding:72px 40px 76px;">
+    <div style="font:600 12px/1 'JetBrains Mono',monospace; letter-spacing:.16em; color:#E8B24A; margin-bottom:28px;">DAILY BUDGET · ENFORCED ON-CHAIN</div>
+    <div style="display:flex; align-items:flex-end; justify-content:space-between; margin-bottom:18px;">
+      <div style="font:900 132px/0.8 'Archivo',sans-serif; letter-spacing:-.05em; color:#F0ECDD;"><span id="stat-budget">$48</span><span style="color:#7FA08F; font-size:60px;">.20</span></div>
+      <div style="font:700 26px/1 'JetBrains Mono',monospace; color:#7FA08F; padding-bottom:16px;">of $50.00</div>
+    </div>
+    <!-- meter -->
+    <div style="height:26px; background:#0A2A20; border:1px solid rgba(255,255,255,.12); position:relative; overflow:hidden; margin-bottom:14px;">
+      <div style="position:absolute; left:0; top:0; bottom:0; width:96.4%; background:#E8B24A;"></div>
+      <div style="position:absolute; right:0; top:0; bottom:0; width:3.6%; background:repeating-linear-gradient(45deg,#2A1410,#2A1410 6px,#3a1c16 6px,#3a1c16 12px);"></div>
+    </div>
+    <div style="display:flex; justify-content:space-between; font:500 12px/1 'JetBrains Mono',monospace; color:#7FA08F; margin-bottom:48px;"><span>$0 spent today</span><span style="color:#E5654A;">a $500 trade → blocked here</span></div>
+    <div style="display:flex; align-items:flex-end; justify-content:space-between; gap:40px; flex-wrap:wrap;">
+      <div>
+        <h1 style="margin:0; font:800 52px/1.02 'Archivo',sans-serif; letter-spacing:-.03em; color:#F0ECDD;">A treasury that<br>cannot be overspent.</h1>
+        <p style="margin:22px 0 0; max-width:520px; font:400 18px/1.6 'Archivo',sans-serif; color:#CFD8CE;">An AI agent hunts yield on DeepBook and proposes trades. A Move policy enforces your budget on every one — the agent only proposes, and never holds a key.</p>
+        <div style="margin-top:32px; display:flex; gap:14px; align-items:center;">
+          <a style="font:700 15px/1 'Archivo',sans-serif; color:#10130A; background:#E8B24A; padding:17px 28px; text-decoration:none;">Arm your mandate</a>
+          <a href="#sim" style="font:600 15px/1 'Archivo',sans-serif; color:#F0ECDD; border:1px solid rgba(255,255,255,.28); padding:16px 26px; text-decoration:none;">Try the policy</a>
+        </div>
+      </div>
+      <div style="display:flex; gap:26px; font:600 11px/1 'JetBrains Mono',monospace; letter-spacing:.12em; color:#7FA08F; padding-bottom:8px;">
+        <span>SUI</span><span style="color:#3E5A4C;">/</span><span>DEEPBOOK</span><span style="color:#3E5A4C;">/</span><span>SEAL</span><span style="color:#3E5A4C;">/</span><span>MOVE</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== STAT STRIP ===== -->
+  <div style="border-top:1px solid rgba(255,255,255,.14); border-bottom:1px solid rgba(255,255,255,.14);">
+    <div style="max-width:1180px; margin:0 auto; display:flex;">
+      <div style="flex:1; padding:30px 40px; border-right:1px solid rgba(255,255,255,.14);"><div style="font:900 40px/1 'Archivo',sans-serif; letter-spacing:-.03em; color:#F0ECDD;">0</div><div style="margin-top:8px; font:600 11px/1 'JetBrains Mono',monospace; letter-spacing:.1em; color:#7FA08F;">KEYS HELD BY AGENT</div></div>
+      <div style="flex:1; padding:30px 40px; border-right:1px solid rgba(255,255,255,.14);"><div style="font:900 40px/1 'Archivo',sans-serif; letter-spacing:-.03em; color:#F0ECDD;"><span id="stat-pct">100</span><span style="font-size:17px; color:#7FA08F;">%</span></div><div style="margin-top:8px; font:600 11px/1 'JetBrains Mono',monospace; letter-spacing:.1em; color:#7FA08F;">ON-CHAIN ENFORCEMENT</div></div>
+      <div style="flex:1; padding:30px 40px; border-right:1px solid rgba(255,255,255,.14);"><div style="font:900 40px/1 'Archivo',sans-serif; letter-spacing:-.03em; color:#F0ECDD;"><span id="stat-rogue">2</span></div><div style="margin-top:8px; font:600 11px/1 'JetBrains Mono',monospace; letter-spacing:.1em; color:#7FA08F;">ROGUE TRADES STOPPED</div></div>
+      <div style="flex:1; padding:30px 40px;"><div style="font:900 40px/1 'Archivo',sans-serif; letter-spacing:-.03em; color:#F0ECDD;">7<span style="font-size:17px; color:#7FA08F;">d</span></div><div style="margin-top:8px; font:600 11px/1 'JetBrains Mono',monospace; letter-spacing:.1em; color:#7FA08F;">MANDATE EXPIRY</div></div>
+    </div>
+  </div>
+
+  <!-- ===== EXECUTION PATH ===== -->
+  <div style="max-width:1180px; margin:0 auto; padding:100px 40px;">
+    <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:54px;">
+      <div>
+        <div style="font:600 12px/1 'JetBrains Mono',monospace; letter-spacing:.18em; color:#E8B24A; margin-bottom:18px;">01 — EXECUTION PATH</div>
+        <h2 style="margin:0; font:800 46px/1.05 'Archivo',sans-serif; letter-spacing:-.02em; color:#F0ECDD; max-width:560px;">Every payment runs the gauntlet.</h2>
+      </div>
+      <p style="margin:0; max-width:320px; font:400 15px/1.6 'Archivo',sans-serif; color:#CFD8CE;">No payment touches your funds until it has passed every rule, atomically, in Move.</p>
+    </div>
+    <div style="display:flex; gap:0; border-top:1px solid rgba(255,255,255,.14);">
+      <div style="flex:1; padding:30px 30px 30px 0; border-right:1px solid rgba(255,255,255,.14);"><div style="font:900 32px/1 'Archivo',sans-serif; color:#E8B24A;">01</div><div style="margin-top:18px; font:700 19px/1.2 'Archivo',sans-serif; color:#F0ECDD;">Propose</div><p style="margin:10px 0 0; font:400 14px/1.55 'Archivo',sans-serif; color:#8FAFA0;">Yield Hunter signs nothing. It posts an intent: market, size, direction.</p></div>
+      <div style="flex:1; padding:30px;"><div style="font:900 32px/1 'Archivo',sans-serif; color:#F0ECDD;">02</div><div style="margin-top:18px; font:700 19px/1.2 'Archivo',sans-serif; color:#F0ECDD;">seal_approve</div><p style="margin:10px 0 0; font:400 14px/1.55 'Archivo',sans-serif; color:#8FAFA0;">Budget, asset class, market, expiry, nonce — checked atomically.</p></div>
+      <div style="flex:1; padding:30px; border-left:1px solid rgba(255,255,255,.14);"><div style="font:900 32px/1 'Archivo',sans-serif; color:#F0ECDD;">03</div><div style="margin-top:18px; font:700 19px/1.2 'Archivo',sans-serif; color:#F0ECDD;">check-rotate-transfer</div><p style="margin:10px 0 0; font:400 14px/1.55 'Archivo',sans-serif; color:#8FAFA0;">Authorization is consumed and rotated in the same call. No replay.</p></div>
+      <div style="flex:1; padding:30px 0 30px 30px; border-left:1px solid rgba(255,255,255,.14);"><div style="font:900 32px/1 'Archivo',sans-serif; color:#74D6A2;">04</div><div style="margin-top:18px; font:700 19px/1.2 'Archivo',sans-serif; color:#F0ECDD;">Settle / revert</div><p style="margin:10px 0 0; font:400 14px/1.55 'Archivo',sans-serif; color:#8FAFA0;">Pass: the swap settles. Fail: the whole tx aborts. Nothing between.</p></div>
+    </div>
+  </div>
+
+  <!-- ===== INTERACTIVE POLICY SIMULATOR ===== -->
+  <div id="sim" style="background:#0A2A20; border-top:1px solid rgba(255,255,255,.14); border-bottom:1px solid rgba(255,255,255,.14);">
+    <div style="max-width:1180px; margin:0 auto; padding:100px 40px;">
+      <div style="margin-bottom:44px;">
+        <div style="font:600 12px/1 'JetBrains Mono',monospace; letter-spacing:.18em; color:#E8B24A; margin-bottom:18px;">02 — TRY THE POLICY · LIVE</div>
+        <h2 style="margin:0; font:800 46px/1.05 'Archivo',sans-serif; letter-spacing:-.02em; color:#F0ECDD;">Set a $50 limit. Try to break it.</h2>
+        <p style="margin:18px 0 0; max-width:560px; font:400 16px/1.6 'Archivo',sans-serif; color:#CFD8CE;">Propose trades and watch the budget fill. Push past $50, or replay an old authorization, and the Move policy aborts it — right here, the same way it would on-chain.</p>
+      </div>
+
+      <div style="display:flex; gap:18px; align-items:stretch;">
+        <!-- controls -->
+        <div style="flex:1; border:1px solid rgba(255,255,255,.14); padding:28px; display:flex; flex-direction:column;">
+          <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:12px;">
+            <div style="font:600 11px/1 'JetBrains Mono',monospace; letter-spacing:.12em; color:#7FA08F;">DAILY BUDGET</div>
+            <div style="font:700 16px/1 'JetBrains Mono',monospace; color:#F0ECDD;">{{ spentLabel }} <span style="color:#7FA08F;">/ {{ capLabel }}</span></div>
+          </div>
+          <div style="height:10px; background:#0E3A2C; overflow:hidden; margin-bottom:6px;"><div style="height:100%; background:{{ meterColor }}; width:{{ pct }}; transition:width .45s cubic-bezier(.2,.8,.2,1), background .25s;"></div></div>
+          <div style="font:500 11px/1 'JetBrains Mono',monospace; color:#7FA08F; margin-bottom:26px;">{{ leftLabel }}</div>
+
+          <div style="font:600 11px/1 'JetBrains Mono',monospace; letter-spacing:.12em; color:#7FA08F; margin-bottom:14px;">PROPOSE A TRADE</div>
+          <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-bottom:14px;">
+            <button onClick="{{ propose5 }}" style="padding:14px 0; background:#0E3A2C; border:1px solid rgba(255,255,255,.16); font:600 13px/1 'JetBrains Mono',monospace; color:#F0ECDD; cursor:pointer; transition:border-color .2s, transform .1s;" style-hover="border-color:#E8B24A;" style-active="transform:translateY(1px);">SWAP $5</button>
+            <button onClick="{{ propose12 }}" style="padding:14px 0; background:#0E3A2C; border:1px solid rgba(255,255,255,.16); font:600 13px/1 'JetBrains Mono',monospace; color:#F0ECDD; cursor:pointer; transition:border-color .2s, transform .1s;" style-hover="border-color:#E8B24A;" style-active="transform:translateY(1px);">SWAP $12</button>
+            <button onClick="{{ propose48 }}" style="padding:14px 0; background:#0E3A2C; border:1px solid rgba(255,255,255,.16); font:600 13px/1 'JetBrains Mono',monospace; color:#F0ECDD; cursor:pointer; transition:border-color .2s, transform .1s;" style-hover="border-color:#E8B24A;" style-active="transform:translateY(1px);">SWAP $48</button>
+          </div>
+          <button onClick="{{ proposeBig }}" style="padding:15px 0; background:transparent; border:1px solid rgba(229,101,74,.5); font:700 13px/1 'JetBrains Mono',monospace; letter-spacing:.04em; color:#E5654A; cursor:pointer; margin-bottom:10px; transition:background .2s;" style-hover="background:rgba(229,101,74,.1);">⚠ ROGUE · SWAP $500</button>
+          <div style="display:flex; gap:10px;">
+            <button onClick="{{ replay }}" style="flex:1; padding:13px 0; background:transparent; border:1px solid rgba(229,101,74,.5); font:700 12px/1 'JetBrains Mono',monospace; color:#E5654A; cursor:pointer; transition:background .2s;" style-hover="background:rgba(229,101,74,.1);">REPLAY LAST AUTH</button>
+            <button onClick="{{ reset }}" style="flex:1; padding:13px 0; background:transparent; border:1px solid rgba(255,255,255,.16); font:700 12px/1 'JetBrains Mono',monospace; color:#7FA08F; cursor:pointer; transition:border-color .2s;" style-hover="border-color:#CFD8CE;">RESET DAY</button>
+          </div>
+        </div>
+
+        <!-- live ledger -->
+        <div style="flex:1.2; border:1px solid rgba(255,255,255,.14); padding:28px; display:flex; flex-direction:column;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px;">
+            <div style="font:600 11px/1 'JetBrains Mono',monospace; letter-spacing:.12em; color:#7FA08F;">ON-CHAIN POLICY LEDGER</div>
+            <div style="display:flex; align-items:center; gap:8px; font:600 11px/1 'JetBrains Mono',monospace; color:#7FA08F;"><span style="width:7px; height:7px; background:#74D6A2;"></span>SUI MAINNET</div>
+          </div>
+          <sc-if value="{{ noLog }}" hint-placeholder-val="{{ true }}">
+            <div style="flex:1; display:flex; align-items:center; justify-content:center; text-align:center; border:1px dashed rgba(255,255,255,.12); min-height:280px;">
+              <div style="font:500 13px/1.6 'JetBrains Mono',monospace; color:#4E6A5C;">No proposals yet.<br>Propose a trade to see the policy decide.</div>
+            </div>
+          </sc-if>
+          <sc-if value="{{ hasLog }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex; flex-direction:column; min-height:280px;">
+              <sc-for list="{{ log }}" as="row" hint-placeholder-count="0">
+                <div style="display:flex; align-items:center; gap:16px; padding:15px 18px; margin-bottom:10px; background:{{ row.bg }}; border-left:3px solid {{ row.accent }}; animation:rowIn .35s ease both;">
+                  <div style="flex:1;">
+                    <div style="font:600 13px/1.3 'JetBrains Mono',monospace; color:#F0ECDD; margin-bottom:4px;">{{ row.label }}</div>
+                    <div style="font:500 11px/1.4 'JetBrains Mono',monospace; color:{{ row.accent }};">{{ row.detail }}</div>
+                  </div>
+                  <div style="font:700 11px/1 'JetBrains Mono',monospace; letter-spacing:.08em; color:{{ row.accent }}; white-space:nowrap;">{{ row.status }}</div>
+                </div>
+              </sc-for>
+            </div>
+          </sc-if>
+        </div>
+      </div>
+      <div style="margin-top:24px; font:500 14px/1.5 'Archivo',sans-serif; color:#8FAFA0;">{{ verdict }}</div>
+    </div>
+  </div>
+
+  <!-- ===== MANDATE RULES ===== -->
+  <div style="max-width:1180px; margin:0 auto; padding:100px 40px;">
+    <div style="font:600 12px/1 'JetBrains Mono',monospace; letter-spacing:.18em; color:#E8B24A; margin-bottom:18px;">03 — THE MANDATE</div>
+    <h2 style="margin:0 0 50px; font:800 46px/1.05 'Archivo',sans-serif; letter-spacing:-.02em; color:#F0ECDD; max-width:620px;">Rules a human can read. Enforcement a chain can prove.</h2>
+    <div style="display:flex; gap:16px; align-items:stretch;">
+      <div style="flex:1; display:flex; flex-direction:column; gap:16px;">
+        <div style="border:1px solid rgba(255,255,255,.14); padding:26px;"><div style="font:600 11px/1 'JetBrains Mono',monospace; letter-spacing:.14em; color:#7FA08F; margin-bottom:16px;">MAX PER-DAY</div><div style="font:900 38px/1 'Archivo',sans-serif; letter-spacing:-.02em; color:#E8B24A;">$50.00</div></div>
+        <div style="border:1px solid rgba(255,255,255,.14); padding:26px;"><div style="font:600 11px/1 'JetBrains Mono',monospace; letter-spacing:.14em; color:#7FA08F; margin-bottom:16px;">EXPIRY</div><div style="font:900 30px/1 'Archivo',sans-serif; letter-spacing:-.02em; color:#F0ECDD;">7 days</div><div style="margin-top:8px; font:500 12px/1 'JetBrains Mono',monospace; color:#7FA08F;">auto-revoke Jul 2</div></div>
+      </div>
+      <div style="flex:1.3; border:1px solid rgba(255,255,255,.14); padding:26px;">
+        <div style="font:600 11px/1 'JetBrains Mono',monospace; letter-spacing:.14em; color:#7FA08F; margin-bottom:18px;">ASSET CATEGORIES</div>
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+          <span style="font:600 13px/1 'JetBrains Mono',monospace; color:#F0ECDD; border:1px solid #E8B24A; padding:10px 14px;">stablecoins</span>
+          <span style="font:600 13px/1 'JetBrains Mono',monospace; color:#F0ECDD; border:1px solid #E8B24A; padding:10px 14px;">blue-chips</span>
+          <span style="font:600 13px/1 'JetBrains Mono',monospace; color:#4E6A5C; border:1px dashed rgba(255,255,255,.16); padding:10px 14px;">memecoins · off</span>
+          <span style="font:600 13px/1 'JetBrains Mono',monospace; color:#4E6A5C; border:1px dashed rgba(255,255,255,.16); padding:10px 14px;">LPs · off</span>
+        </div>
+        <div style="font:600 11px/1 'JetBrains Mono',monospace; letter-spacing:.14em; color:#7FA08F; margin:26px 0 18px;">DEEPBOOK MARKETS</div>
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+          <span style="font:600 13px/1 'JetBrains Mono',monospace; color:#F0ECDD; background:#0A2A20; border:1px solid rgba(255,255,255,.14); padding:10px 14px;">SUI / USDC</span>
+          <span style="font:600 13px/1 'JetBrains Mono',monospace; color:#F0ECDD; background:#0A2A20; border:1px solid rgba(255,255,255,.14); padding:10px 14px;">DEEP / USDC</span>
+        </div>
+      </div>
+      <div style="flex:1; background:#E8B24A; padding:26px; display:flex; flex-direction:column;">
+        <div style="font:600 11px/1 'JetBrains Mono',monospace; letter-spacing:.14em; color:#8A6620; margin-bottom:16px;">IN PLAIN WORDS</div>
+        <p style="margin:0; font:600 18px/1.5 'Archivo',sans-serif; color:#10130A;">Spend up to $50/day, trading only stablecoins and blue-chips on SUI/USDC and DEEP/USDC. Expires in 7 days.</p>
+        <div style="margin-top:auto; padding-top:24px; font:600 12px/1 'JetBrains Mono',monospace; color:#5C4310;">The agent can never hold a key.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== PRINCIPLES ===== -->
+  <div style="border-top:1px solid rgba(255,255,255,.14);">
+    <div style="max-width:1180px; margin:0 auto; padding:100px 40px;">
+      <div style="font:600 12px/1 'JetBrains Mono',monospace; letter-spacing:.18em; color:#E8B24A; margin-bottom:50px;">04 — PRINCIPLES</div>
+      <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:0;">
+        <div style="padding:0 28px 0 0; border-right:1px solid rgba(255,255,255,.14);"><div style="font:900 26px/1 'Archivo',sans-serif; color:#E8B24A; margin-bottom:18px;">01</div><div style="font:700 18px/1.25 'Archivo',sans-serif; color:#F0ECDD; margin-bottom:10px;">Proposes, never holds.</div><p style="margin:0; font:400 14px/1.55 'Archivo',sans-serif; color:#8FAFA0;">The agent submits trades. It never touches a key.</p></div>
+        <div style="padding:0 28px; border-right:1px solid rgba(255,255,255,.14);"><div style="font:900 26px/1 'Archivo',sans-serif; color:#F0ECDD; margin-bottom:18px;">02</div><div style="font:700 18px/1.25 'Archivo',sans-serif; color:#F0ECDD; margin-bottom:10px;">Rules in plain words.</div><p style="margin:0; font:400 14px/1.55 'Archivo',sans-serif; color:#8FAFA0;">Budget, assets, markets, expiry — readable by a human.</p></div>
+        <div style="padding:0 28px; border-right:1px solid rgba(255,255,255,.14);"><div style="font:900 26px/1 'Archivo',sans-serif; color:#F0ECDD; margin-bottom:18px;">03</div><div style="font:700 18px/1.25 'Archivo',sans-serif; color:#F0ECDD; margin-bottom:10px;">Enforced in Move.</div><p style="margin:0; font:400 14px/1.55 'Archivo',sans-serif; color:#8FAFA0;">seal_approve + atomic check-rotate-transfer gate every payment.</p></div>
+        <div style="padding:0 0 0 28px;"><div style="font:900 26px/1 'Archivo',sans-serif; color:#F0ECDD; margin-bottom:18px;">04</div><div style="font:700 18px/1.25 'Archivo',sans-serif; color:#F0ECDD; margin-bottom:10px;">Refusal is provable.</div><p style="margin:0; font:400 14px/1.55 'Archivo',sans-serif; color:#8FAFA0;">A rogue or replayed trade aborts on-chain, in the open.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== CTA ===== -->
+  <div style="background:#E8B24A;">
+    <div style="max-width:1180px; margin:0 auto; padding:90px 40px; display:flex; justify-content:space-between; align-items:center; gap:30px; flex-wrap:wrap;">
+      <div>
+        <h2 style="margin:0; font:900 56px/0.96 'Archivo',sans-serif; letter-spacing:-.03em; color:#10130A;">Arm your mandate.</h2>
+        <p style="margin:16px 0 0; font:500 17px/1.5 'Archivo',sans-serif; color:#5C4310;">Set the rules once. Let the chain keep them.</p>
+      </div>
+      <div style="display:flex; gap:14px; align-items:center;">
+        <a style="font:700 15px/1 'Archivo',sans-serif; color:#E8B24A; background:#10130A; padding:18px 30px; text-decoration:none;">Launch Sentinel</a>
+        <a style="font:600 15px/1 'Archivo',sans-serif; color:#10130A; border:1px solid #10130A; padding:17px 26px; text-decoration:none;">Read the Move policy</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== FOOTER ===== -->
+  <div style="background:#0A2A20;">
+    <div style="max-width:1180px; margin:0 auto; padding:64px 40px 40px; display:flex; justify-content:space-between; gap:40px; flex-wrap:wrap;">
+      <div style="max-width:300px;">
+        <div style="display:flex; align-items:center; gap:11px; margin-bottom:18px;">
+          <div style="position:relative; width:22px; height:22px; background:#F0ECDD; clip-path:polygon(30% 0,70% 0,100% 30%,100% 70%,70% 100%,30% 100%,0 70%,0 30%); display:flex; align-items:center; justify-content:center;"><div style="width:14px; height:14px; background:#0A2A20; clip-path:polygon(30% 0,70% 0,100% 30%,100% 70%,70% 100%,30% 100%,0 70%,0 30%); display:flex; align-items:center; justify-content:center;"><div style="width:6px; height:6px; background:#E8B24A; transform:rotate(45deg);"></div></div></div>
+          <div style="font:800 16px/1 'Archivo',sans-serif; color:#F0ECDD;">SENTINEL</div>
+        </div>
+        <p style="margin:0; font:400 14px/1.6 'Archivo',sans-serif; color:#7FA08F;">Key-safe DeFi treasury on Sui. The agent proposes — the chain disposes.</p>
+      </div>
+      <div style="display:flex; gap:60px;">
+        <div><div style="font:600 11px/1 'JetBrains Mono',monospace; letter-spacing:.14em; color:#4E6A5C; margin-bottom:16px;">PRODUCT</div><div style="display:flex; flex-direction:column; gap:11px; font:500 14px/1 'Archivo',sans-serif; color:#CFD8CE;"><span>Mandate wallet</span><span>Agents</span><span>Policy engine</span></div></div>
+        <div><div style="font:600 11px/1 'JetBrains Mono',monospace; letter-spacing:.14em; color:#4E6A5C; margin-bottom:16px;">DEVELOPERS</div><div style="display:flex; flex-direction:column; gap:11px; font:500 14px/1 'Archivo',sans-serif; color:#CFD8CE;"><span>Docs</span><span>Move policy</span><span>GitHub</span></div></div>
+        <div><div style="font:600 11px/1 'JetBrains Mono',monospace; letter-spacing:.14em; color:#4E6A5C; margin-bottom:16px;">COMPANY</div><div style="display:flex; flex-direction:column; gap:11px; font:500 14px/1 'Archivo',sans-serif; color:#CFD8CE;"><span>Explorer</span><span>Security</span><span>Contact</span></div></div>
+      </div>
+    </div>
+    <div style="max-width:1180px; margin:0 auto; padding:20px 40px; border-top:1px solid rgba(255,255,255,.1); display:flex; justify-content:space-between; font:500 11px/1 'JetBrains Mono',monospace; letter-spacing:.06em; color:#4E6A5C;"><span>THE AGENT NEVER HOLDS A KEY</span><span>© 2026 SENTINEL</span></div>
+  </div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { spent: 0, cap: 50, log: [], lastNonce: null, lastVerdict: '' };
+  lid = 1;
+  nseq = 0;
+
+  componentDidMount() {
+    this.countUp();
+  }
+
+  countUp() {
+    const run = (id, to, prefix) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      const t0 = performance.now(), dur = 1100;
+      const step = (t) => {
+        const k = Math.min(1, (t - t0) / dur);
+        const e = 1 - Math.pow(1 - k, 3);
+        el.textContent = (prefix || '') + Math.round(to * e);
+        if (k < 1) requestAnimationFrame(step);
+      };
+      requestAnimationFrame(step);
+    };
+    run('stat-budget', 48, '$');
+    run('stat-pct', 100, '');
+    run('stat-rogue', 2, '');
+  }
+
+  add(entry, patch) {
+    this.setState(s => Object.assign({ log: [Object.assign({ id: this.lid++ }, entry), ...s.log].slice(0, 7) }, patch || {}));
+  }
+
+  propose(amount) {
+    const s = this.state;
+    if (s.spent + amount <= s.cap) {
+      const nonce = '0x' + (0x4e1 + this.nseq++).toString(16);
+      const spent = +(s.spent + amount).toFixed(2);
+      this.add(
+        { label: 'agent.propose · SWAP ' + amount.toFixed(2) + ' USDC → SUI', detail: 'seal_approve ✓ · ' + spent.toFixed(2) + ' ≤ ' + s.cap.toFixed(2) + ' /day · nonce ' + nonce, status: 'APPROVED', accent: '#74D6A2', bg: '#0E3A2C' },
+        { spent: spent, lastNonce: nonce, lastVerdict: 'Approved. $' + spent.toFixed(2) + ' of $' + s.cap.toFixed(2) + ' spent today — the agent stayed inside its mandate.' }
+      );
+    } else {
+      const left = +(s.cap - s.spent).toFixed(2);
+      this.add(
+        { label: 'agent.propose · SWAP ' + amount.toFixed(2) + ' USDC → SUI', detail: 'MoveAbort(0x2::policy::E_BUDGET_EXCEEDED) · ' + amount.toFixed(2) + ' > ' + left.toFixed(2) + ' left', status: 'ABORTED', accent: '#E5654A', bg: '#2A1410' },
+        { lastVerdict: 'Blocked on-chain. The trade exceeded the daily budget, so the whole transaction reverted — no funds moved.' }
+      );
+    }
+  }
+
+  replay() {
+    const s = this.state;
+    if (!s.lastNonce) {
+      this.add(
+        { label: 'replay · no prior authorization', detail: 'approve a trade first, then replay it', status: '—', accent: '#7FA08F', bg: '#0E3A2C' },
+        { lastVerdict: 'Nothing to replay yet — approve a trade, then try replaying its authorization.' }
+      );
+      return;
+    }
+    this.add(
+      { label: 'replay · reused signed approval ' + s.lastNonce, detail: 'MoveAbort(0x2::policy::E_NONCE_REPLAY) · nonce already consumed', status: 'ABORTED', accent: '#E5654A', bg: '#2A1410' },
+      { lastVerdict: 'Blocked on-chain. The authorization was already consumed and rotated — a replayed approval can never settle.' }
+    );
+  }
+
+  reset() {
+    this.setState({ spent: 0, log: [], lastNonce: null, lastVerdict: 'Day reset. Budget back to $0.00 of $50.00.' });
+  }
+
+  renderVals() {
+    const s = this.state;
+    const pct = Math.min(100, (s.spent / s.cap) * 100);
+    const left = +(s.cap - s.spent).toFixed(2);
+    return {
+      pct: pct.toFixed(1) + '%',
+      meterColor: pct >= 100 ? '#E5654A' : '#E8B24A',
+      spentLabel: '$' + s.spent.toFixed(2),
+      capLabel: '$' + s.cap.toFixed(2),
+      leftLabel: '$' + left.toFixed(2) + ' left today · $500 hard cap',
+      log: s.log,
+      hasLog: s.log.length > 0,
+      noLog: s.log.length === 0,
+      verdict: s.lastVerdict || 'Tip: approve a few trades to fill the budget, then try $500 or a replay to watch the policy abort.',
+      propose5: () => this.propose(5),
+      propose12: () => this.propose(12),
+      propose48: () => this.propose(48.20),
+      proposeBig: () => this.propose(500),
+      replay: () => this.replay(),
+      reset: () => this.reset()
+    };
+  }
+}
+</script>
+</body>
+</html>

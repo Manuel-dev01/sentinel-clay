@@ -1,0 +1,11 @@
+{
+  "name": "sentinel-monorepo",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Sentinel — agent-native, key-safe DeFi treasury on Sui. Workspace: sdk + web.",
+  "scripts": {
+    "dev": "pnpm --filter web dev",
+    "build": "pnpm --filter web build",
+    "test": "pnpm --filter @sentinel/sdk test"
+  }
+}

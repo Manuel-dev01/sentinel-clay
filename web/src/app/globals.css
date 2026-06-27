@@ -1,0 +1,84 @@
+@import 'tailwindcss';
+
+@theme {
+  --color-forest: #0e3a2c;
+  --color-panel: #0a2a20;
+  --color-gold: #e8b24a;
+  --color-cream: #f0ecdd;
+  --color-approve: #74d6a2;
+  --color-abort: #e5654a;
+  --color-muted: #7fa08f;
+  --color-dim: #4e6a5c;
+  --color-sage: #8fafa0;
+  --color-ink: #10130a;
+  --color-hair: rgba(255, 255, 255, 0.14);
+  --color-hairsoft: rgba(255, 255, 255, 0.1);
+
+  --font-sans: var(--font-archivo), sans-serif;
+  --font-mono: var(--font-jetbrains), monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--color-forest);
+  color: var(--color-cream);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: var(--color-gold);
+  color: var(--color-ink);
+}
+
+@keyframes rowIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes pulseDot {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.animate-rowIn {
+  animation: rowIn 0.35s ease both;
+}
+.animate-pulseDot {
+  animation: pulseDot 1.6s ease-in-out infinite;
+}
+
+/* range slider — gold thumb on a dark track */
+input[type='range'] {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 8px;
+  background: var(--color-panel);
+  outline: none;
+}
+input[type='range']::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  background: var(--color-cream);
+  cursor: pointer;
+  border: 2px solid var(--color-gold);
+}

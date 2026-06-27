@@ -4,6 +4,9 @@
   "private": true,
   "type": "module",
   "description": "Sentinel off-chain authorization layer: the agent PROPOSES; Move (re-)enforces. AuthorizationProvider (LocalWitness default, Seal adapter) + PaymentClient.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "test": "node --import tsx --test test/*.test.ts",

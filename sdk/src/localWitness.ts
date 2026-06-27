@@ -1,7 +1,7 @@
 import { bcs } from '@mysten/sui/bcs';
-import { keccak256 } from './keccak.js';
-import { DEFAULT_SEED } from './config.js';
-import type { AuthorizationProvider, PaymentIntentFields, WitnessMaterial } from './provider.js';
+import { keccak256 } from './keccak';
+import { DEFAULT_SEED } from './config';
+import type { AuthorizationProvider, PaymentIntentFields, WitnessMaterial } from './provider';
 
 /**
  * Deterministic, always-available provider — the demo guarantee. A user-held `seed` derives every

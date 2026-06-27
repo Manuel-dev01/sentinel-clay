@@ -1,0 +1,7 @@
+packages:
+  - sdk
+  - web
+
+onlyBuiltDependencies:
+  - esbuild
+  - sharp

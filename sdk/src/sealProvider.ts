@@ -2,15 +2,15 @@ import { SealClient, SessionKey, NoAccessError } from '@mysten/seal';
 import { Transaction } from '@mysten/sui/transactions';
 import type { SuiJsonRpcClient } from '@mysten/sui/jsonRpc';
 import type { Signer } from '@mysten/sui/cryptography';
-import { CLOCK_ID, SEAL_TESTNET_KEY_SERVERS } from './config.js';
-import { encodeSealId, encodeSealIdHex } from './sealId.js';
-import { LocalWitnessProvider } from './localWitness.js';
+import { CLOCK_ID, SEAL_TESTNET_KEY_SERVERS } from './config';
+import { encodeSealId, encodeSealIdHex } from './sealId';
+import { LocalWitnessProvider } from './localWitness';
 import {
   PolicyDeniedError,
   type AuthorizationProvider,
   type PaymentIntentFields,
   type WitnessMaterial,
-} from './provider.js';
+} from './provider';
 
 export interface SealProviderOptions {
   client: SuiJsonRpcClient;

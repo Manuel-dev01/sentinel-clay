@@ -1,8 +1,8 @@
 import { Transaction } from '@mysten/sui/transactions';
 import type { SuiJsonRpcClient } from '@mysten/sui/jsonRpc';
 import type { Signer } from '@mysten/sui/cryptography';
-import { CLOCK_ID, DEEPBOOK, SENTINEL_PACKAGE_ID } from './config.js';
-import type { PaymentIntentFields, WitnessMaterial } from './provider.js';
+import { CLOCK_ID, DEEPBOOK, SENTINEL_PACKAGE_ID } from './config';
+import type { PaymentIntentFields, WitnessMaterial } from './provider';
 
 export interface PayRealArgs {
   packageId?: string;
