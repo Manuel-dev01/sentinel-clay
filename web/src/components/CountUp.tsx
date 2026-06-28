@@ -21,6 +21,10 @@ export function CountUp({
   const [v, setV] = useState(0);
 
   useEffect(() => {
+    if (typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      setV(to);
+      return;
+    }
     let raf = 0;
     const t0 = performance.now();
     const step = (t: number) => {

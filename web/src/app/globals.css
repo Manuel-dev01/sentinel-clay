@@ -82,3 +82,24 @@ input[type='range']::-webkit-slider-thumb {
   cursor: pointer;
   border: 2px solid var(--color-gold);
 }
+
+/* keyboard focus ring · custom-styled links/buttons keep a visible focus state */
+a:focus-visible,
+button:focus-visible,
+[role='button']:focus-visible,
+input:focus-visible {
+  outline: 2px solid var(--color-gold);
+  outline-offset: 2px;
+}
+
+/* respect prefers-reduced-motion · neutralize CSS animations + transitions */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

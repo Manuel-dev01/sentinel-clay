@@ -88,7 +88,7 @@ export function PolicySimulator() {
             style={{ width: `${pct}%`, background: meterColor }}
           />
         </div>
-        <div className="mb-6 font-mono text-[11px] text-muted">{left.toFixed(2)} SUI left today · 10 SUI hard cap</div>
+        <div className="mb-6 font-mono text-[11px] text-muted">{left.toFixed(2)} SUI left today · {s.cap.toFixed(0)} SUI hard cap</div>
 
         <div className="mb-3.5 font-mono text-[11px] font-semibold tracking-[0.12em] text-muted">PROPOSE A TRADE</div>
         <div className="mb-3.5 grid grid-cols-3 gap-2.5">
