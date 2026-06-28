@@ -10,17 +10,20 @@
 
 </div>
 
-> **Build status (2026-06-28):** Stages 0–6 complete. The Move package is **published on Sui
-> mainnet** (`0xd37ca38e…`) - same source as testnet - where a compliant `seal_approve` settles and
-> an over-cap one **aborts `E_OVER_CAP`** on-chain (`6JWnSZKX…`). The app runs as a full Next.js app on
-> **[sentinel-clay-web.vercel.app](https://sentinel-clay-web.vercel.app/)** over the testnet Move
-> package. **Google login (zkLogin via Enoki) with sponsored gas**, a mandate builder that arms an
-> on-chain policy in one signature, a **keyless AI agent** (DeepSeek "Yield Hunter") that reads
-> DeepBook + the mandate and *proposes* trades, an approve→`pay_real` settle path, and a **Walrus**
-> audit trail of every proposal+verdict. **32 Move tests + 6 TS tests** pass; a compliant trade
-> **fills on real DeepBook v3** (`pay_real` 0.5 SUI → **20 DEEP**, `5SMBQo8B…`); rogue/over-cap and
-> replayed trades **abort on-chain** (`E_OVER_CAP` `DcUUFG8b…`, `E_REPLAY`). The agent process holds
-> **no key** - it only proposes; the user's zkLogin session signs; Move enforces.
+> **Build status (2026-06-28):** Stages 0–6 complete.
+>
+> - **On mainnet:** the Move package is published on Sui mainnet (`0xd37ca38e…`), same source as
+>   testnet, where a compliant `seal_approve` settles and an over-cap one **aborts `E_OVER_CAP`**
+>   on-chain (`6JWnSZKX…`).
+> - **Live app** ([sentinel-clay-web.vercel.app](https://sentinel-clay-web.vercel.app/)), over the
+>   testnet package: Google login (zkLogin via Enoki) with sponsored gas, a mandate builder that arms
+>   an on-chain policy in one signature, a **keyless AI agent** (DeepSeek "Yield Hunter") that reads
+>   DeepBook + the mandate and only *proposes* trades, an approve→`pay_real` settle path, and a
+>   **Walrus** audit trail of every proposal and verdict.
+> - **Proven on-chain:** a compliant trade **fills on real DeepBook v3** (0.5 SUI → **20 DEEP**,
+>   `5SMBQo8B…`); over-cap and replayed trades **abort** (`E_OVER_CAP` `DcUUFG8b…`, `E_REPLAY`
+>   `3aNnknYg…`). **42 tests pass** (32 sentinel + 4 nautilus Move, 6 SDK).
+> - **The agent holds no key** - it only proposes; the user's zkLogin session signs; Move enforces.
 
 ---
 
@@ -30,7 +33,7 @@ Letting an AI agent trade your funds means handing it your keys. One prompt inje
 
 ## What Sentinel does
 
-You fund a self-custodial **mandate wallet** and set human-readable rules - *max $50/day, stablecoin pairs only, these DeepBook markets, expires in 30 days.* You switch on an AI agent that hunts yield and arbitrage on DeepBook. **The agent never holds a key.** It can only *propose* a trade. Every payment is gated by an on-chain Move policy that re-checks the mandate and consumes a one-shot authorization. An over-cap, wrong-market, or replayed trade **aborts on-chain** - provably, every time.
+You fund a self-custodial **mandate wallet** and set human-readable rules - *max 0.5 SUI/day, allowed asset categories only, these DeepBook markets, expires in 30 days.* You switch on an AI agent that hunts yield and arbitrage on DeepBook. **The agent never holds a key.** It can only *propose* a trade. Every payment is gated by an on-chain Move policy that re-checks the mandate and consumes a one-shot authorization. An over-cap, wrong-market, or replayed trade **aborts on-chain** - provably, every time.
 
 > Off-chain authorization is an optimization. On-chain Move is the law.
 
@@ -48,7 +51,9 @@ You fund a self-custodial **mandate wallet** and set human-readable rules - *max
 
 Real testnet transactions (committed, explorer-visible): **real DeepBook fill** `5SMBQo8B…`
 (0.5 SUI → 20 DEEP); `seal_approve` compliant `3mVozzJP…`; over-cap abort `E_OVER_CAP` `DcUUFG8b…`;
-`E_REPLAY` `3aNnknYg…`. Full transcript in [DEPLOYMENTS.md](DEPLOYMENTS.md).
+`E_REPLAY` `3aNnknYg…`. The **same policy is also proven on Sui mainnet** (package `0xd37ca38e…`):
+compliant `seal_approve` `2z8CxQ6C…`, over-cap `E_OVER_CAP` `6JWnSZKX…`. Full transcript in
+[DEPLOYMENTS.md](DEPLOYMENTS.md).
 
 ▶️ **Demo:** run [DEMO_CHECKLIST.md](DEMO_CHECKLIST.md) against the [live app](https://sentinel-clay-web.vercel.app/).
 

@@ -71,10 +71,17 @@ the pass condition. Reference ids are at the bottom.
 | Thing | Value |
 |------|-------|
 | Live app | https://sentinel-clay-web.vercel.app/ |
-| Package | `0x7a7ee7186ccb69b2b250e7b08fc31b8ccfadae9a7596a352112f7aa3e72a77f9` |
+| Package (testnet - what the live app uses) | `0x7a7ee7186ccb69b2b250e7b08fc31b8ccfadae9a7596a352112f7aa3e72a77f9` |
+| Package (mainnet - same source, provenance) | `0xd37ca38e54a3218bbdf7417b9817d0075ebd56ed65584a382af87854e2605066` |
+| Mainnet proof (same policy) | over-cap `E_OVER_CAP` `6JWnSZKX…` · compliant `seal_approve` `2z8CxQ6C…` |
 | App market registry | `0x8b49d0d7afde529a8784f3f255b1fa2168519988aae242f5bf3a881b6a7f7c1f` |
 | DEEP_SUI pool | `0x48c95963e9eac37a316b7ae04a0deb761bcdcc2b67912374d6036e7f0e9bae9f` |
-| Explorer | https://suiscan.xyz/testnet |
+| Explorer (testnet) | https://suiscan.xyz/testnet |
+| Explorer (mainnet) | https://suiscan.xyz/mainnet |
+
+> The live app demos on **testnet** (free faucet SUI, real DeepBook fills). The **same Move policy**
+> is published on **mainnet** and proven there - a compliant `seal_approve` settles and an over-cap
+> one aborts `E_OVER_CAP` (`6JWnSZKX…`). Verify on the mainnet explorer above.
 
 ## Known limitations (honest)
 - Real DeepBook fills depend on testnet liquidity; if a compliant fill shows `0 DEEP`, the **policy
