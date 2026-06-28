@@ -3,7 +3,7 @@
 /// only pass objects + pure values (never a constructed `&PaymentIntent`), so the proposed trade
 /// is supplied field-wise and the `id` binds the release to exactly one (mandate, nonce).
 ///
-/// `seal_check` routes through the SAME `policy::check` that `payment::pay` calls — so a key
+/// `seal_check` routes through the SAME `policy::check` that `payment::pay` calls - so a key
 /// release granted off-chain can never authorize a payment that on-chain Move would abort. Seal
 /// gates the *secret*; `payment.move` remains the *law* (CLAUDE.md §5.3, locked Decision #1).
 module sentinel::seal_policy;

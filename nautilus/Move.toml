@@ -1,0 +1,10 @@
+[package]
+name = "sentinel_nautilus"
+edition = "2024"
+
+# Stretch package (CLAUDE.md Stage 6 / Nautilus). Kept SEPARATE from `sentinel` so the audited core
+# is never destabilized. Sui framework system deps are auto-injected (same as the sentinel package).
+[dependencies]
+
+[addresses]
+sentinel_nautilus = "0x0"

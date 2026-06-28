@@ -1,6 +1,6 @@
 /// The heart: atomic verify-intent -> verify+rotate one-shot witness -> spend -> execute -> emit.
 /// `authorize` is the shared on-chain LAW (policy + witness + spend); the `pay_*` wrappers add a
-/// venue and emit. Same law for every venue — the mock replaces the venue, never the law
+/// venue and emit. Same law for every venue - the mock replaces the venue, never the law
 /// (locked Decision #3). Any violation aborts the whole PTB. (CLAUDE.md §5.4)
 ///
 /// Stage 3: `pay_mock` fills against the in-package MockPool (the guaranteed demo beat).
@@ -19,7 +19,7 @@ use sentinel::errors;
 use deepbook::pool::Pool;
 use token::deep::DEEP;
 
-/// One-shot authorization. **No `copy`, `drop`, or `store`** — the type system forbids
+/// One-shot authorization. **No `copy`, `drop`, or `store`** - the type system forbids
 /// duplicating, dropping, or stashing it; it MUST be consumed by `authorize` in the same PTB.
 public struct Witness {
     preimage: vector<u8>,
@@ -40,7 +40,7 @@ public fun commitment_of(preimage: vector<u8>): vector<u8> {
     hash::keccak256(&preimage)
 }
 
-/// On-chain Witness constructor. Unprivileged — the gate is that `keccak256(preimage)` must equal
+/// On-chain Witness constructor. Unprivileged - the gate is that `keccak256(preimage)` must equal
 /// the mandate's current commitment.
 public fun mint_witness(preimage: vector<u8>, nonce: u64): Witness {
     Witness { preimage, nonce }
@@ -59,7 +59,7 @@ public(package) fun authorize(
 ) {
     // 1. mandate live
     mandate::assert_active(mandate, clock);
-    // 2. policy — the EXACT same check seal_approve dry-runs
+    // 2. policy - the EXACT same check seal_approve dry-runs
     policy::check(mandate, registry, intent, clock);
     // 3. verify the one-shot witness (consume the resource into its fields)
     let Witness { preimage, nonce: witness_nonce } = witness;
@@ -106,7 +106,7 @@ public fun pay_mock<B, Q>(
 }
 
 /// Compliant trade against a real DeepBook v3 pool. Same law as `pay_mock` (coin-input model,
-/// pool-id binding) — only the venue differs. `deep_in` pays the DeepBook fee (over-estimate
+/// pool-id binding) - only the venue differs. `deep_in` pays the DeepBook fee (over-estimate
 /// refunded; whitelisted pools take a zero DEEP coin). Remainders are refunded to the caller.
 public fun pay_real<B, Q>(
     mandate: &mut Mandate,

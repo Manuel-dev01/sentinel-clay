@@ -1,6 +1,6 @@
 /// Venue adapter. `execute_mock` fills against a deterministic in-package `MockPool`;
 /// `execute_real` (added with the DeepBook dependency) fills against DeepBook v3. Both sit
-/// AFTER `payment::authorize` (policy + witness) — the mock replaces the *venue*, never the
+/// AFTER `payment::authorize` (policy + witness) - the mock replaces the *venue*, never the
 /// *law* (locked Decision #3). (CLAUDE.md §5.5)
 module sentinel::execution;
 
@@ -47,7 +47,7 @@ public fun fund_quote<B, Q>(pool: &mut MockPool<B, Q>, c: Coin<Q>) {
 
 /// Swap the entire `quote_in` for base at the fixed price. Aborts `E_SLIPPAGE` if the computed
 /// fill is below `min_base_out` or exceeds the base reserve. Consumes all of `quote_in` into the
-/// pool and returns the base out — a real coin movement. Only `payment` calls this.
+/// pool and returns the base out - a real coin movement. Only `payment` calls this.
 public(package) fun execute_mock<B, Q>(
     pool: &mut MockPool<B, Q>,
     quote_in: Coin<Q>,
@@ -76,7 +76,7 @@ public(package) fun execute_real<B, Q>(
     pool::swap_exact_quote_for_base(pool, quote_in, deep_in, min_base_out, clock, ctx)
 }
 
-/// The DeepBook pool's object id — used by `payment` to bind the intent's declared market to the
+/// The DeepBook pool's object id - used by `payment` to bind the intent's declared market to the
 /// actual venue traded (so the registry allowlist can't be bypassed with a different pool object).
 public fun real_pool_id<B, Q>(pool: &Pool<B, Q>): ID { object::id(pool) }
 

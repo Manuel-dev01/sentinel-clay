@@ -3,7 +3,7 @@
 /// Every policy check, witness verification, and mandate guard aborts with one of
 /// these codes. Exposing them through accessors means `seal_policy::seal_approve`
 /// (off-chain dry-run) and `payment::pay` (on-chain enforcement) reference the
-/// *exact same* values — the off-chain verdict can never diverge from on-chain law.
+/// *exact same* values - the off-chain verdict can never diverge from on-chain law.
 module sentinel::errors;
 
 const E_OVER_CAP: u64 = 1; // daily cap exceeded

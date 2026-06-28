@@ -10,7 +10,9 @@
 
 </div>
 
-> **Build status (2026-06-27):** Stages 0–5 complete & live - a full Next.js app on
+> **Build status (2026-06-28):** Stages 0–6 complete. The Move package is **published on Sui
+> mainnet** (`0xd37ca38e…`) - same source as testnet - where a compliant `seal_approve` settles and
+> an over-cap one **aborts `E_OVER_CAP`** on-chain (`6JWnSZKX…`). The app runs as a full Next.js app on
 > **[sentinel-clay-web.vercel.app](https://sentinel-clay-web.vercel.app/)** over the testnet Move
 > package. **Google login (zkLogin via Enoki) with sponsored gas**, a mandate builder that arms an
 > on-chain policy in one signature, a **keyless AI agent** (DeepSeek "Yield Hunter") that reads
@@ -81,7 +83,7 @@ Real testnet transactions (committed, explorer-visible): **real DeepBook fill** 
 | **Walrus** | Immutable audit log - every proposal+verdict is a Seal-encrypted blob (testnet publisher/aggregator). _live in app_ |
 | **zkLogin + Enoki sponsored tx** | Google login, no seed phrase, gas sponsored - judge needs no wallet/SUI. _live in app (dapp-kit + @mysten/enoki)_ |
 | **DeepSeek agent** | The keyless "Yield Hunter" runs server-side (`/api/agent`), proposes trades with plain-English rationale; never holds a key |
-| **Nautilus** *(stretch)* | Agent strategy in a TEE with on-chain attestation |
+| **Nautilus** *(stretch)* | Agent strategy in a TEE so proposals are provably from the attested binary; on-chain ed25519 verifier module shipped + tested (`nautilus/`), live AWS Nitro deploy is the documented last mile. See [NAUTILUS.md](NAUTILUS.md) |
 
 ## Move highlights (for reviewers)
 
@@ -91,7 +93,7 @@ Real testnet transactions (committed, explorer-visible): **real DeepBook fill** 
 
 ## Security
 
-**`sui move test` → 32 passed, 0 failed** (Stages 0–4) · **`pnpm test` (sdk) → 6 passed** (keccak↔Move parity, `seal_id` codec).
+**`sui move test` → 32 passed, 0 failed** (sentinel) · **4 passed** (`nautilus/` enclave verifier, ed25519 vs RFC 8032) · **`pnpm test` (sdk) → 6 passed** (keccak↔Move parity, `seal_id` codec).
 
 | Property | Test | Status |
 |----------|------|--------|
@@ -110,6 +112,7 @@ Run: `sui move test`
 
 | What | ID / URL | Date |
 |------|----------|------|
+| **Mainnet package** (same source; compliant `seal_approve` + over-cap `E_OVER_CAP` proven on mainnet) | `0xd37ca38e54a3218bbdf7417b9817d0075ebd56ed65584a382af87854e2605066` | 2026-06-28 |
 | **Live app** | https://sentinel-clay-web.vercel.app/ | 2026-06-27 |
 | Testnet package (current - Seal adapter, vendored clean build) | `0x7a7ee7186ccb69b2b250e7b08fc31b8ccfadae9a7596a352112f7aa3e72a77f9` | 2026-06-26 |
 | App market registry (shared, DEEP_SUI allowlisted) | `0x8b49d0d7afde529a8784f3f255b1fa2168519988aae242f5bf3a881b6a7f7c1f` | 2026-06-27 |
@@ -121,6 +124,7 @@ live abort/replay tx digests are in [DEPLOYMENTS.md](DEPLOYMENTS.md).
 ## Repo layout
 ```
 sentinel/   Move package (mandate · policy · payment · seal_policy · execution) + vendored deepbook
+nautilus/   Move package (stretch): enclave attestation/authorship verifier (ed25519) + tests
 sdk/        TypeScript: AuthorizationProvider (LocalWitness + Seal), PaymentClient, SealAuditLog
 web/        Next.js app - landing, mandate builder, keyless agent, settle, Walrus audit
 ```
@@ -158,7 +162,7 @@ trade-SUI → agent **proposes** a DeepBook trade → **Approve** → settles + 
 over-cap → aborts `E_OVER_CAP` → **replay** → aborts `E_REPLAY` → **Activity** shows the Walrus audit trail.
 
 ## What's next
-Mainnet deploy · Nautilus-attested agent strategy · multi-asset mandate vault (Model B) · Walrus Site + SuiNS.
+Live AWS Nitro enclave deploy (the on-chain verifier + mock path already ship, see [NAUTILUS.md](NAUTILUS.md)) · multi-asset mandate vault (Model B) · Walrus Site + SuiNS.
 
 ## Built for
 The **CLAY Hackathon** (Code Like A Yeti) on Sui, by Emmanuel Olamiye.

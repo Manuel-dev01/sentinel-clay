@@ -6,7 +6,7 @@
 /// `evaluate` is non-aborting (returns 0 or the precise errors::E_* code) and
 /// side-effect-free; `check` is the aborting wrapper. Keeping `evaluate` pure lets the
 /// Seal key-server dry-run be honest and lets fuzz tests classify intents without an
-/// abort halting the run. (Design logged in DECISIONS.md — a 7th module beyond §5.4.)
+/// abort halting the run. (Design logged in DECISIONS.md - a 7th module beyond §5.4.)
 module sentinel::policy;
 
 use sui::clock::{Self, Clock};
@@ -72,7 +72,7 @@ public fun evaluate(
     0
 }
 
-/// Aborting wrapper — the on-chain "law". `pay` and `seal_approve` both call this.
+/// Aborting wrapper - the on-chain "law". `pay` and `seal_approve` both call this.
 public fun check(
     m: &Mandate,
     registry: &MarketRegistry,

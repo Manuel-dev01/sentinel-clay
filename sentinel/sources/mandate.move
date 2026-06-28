@@ -1,5 +1,5 @@
 /// Mandate object: per-user spending rules + daily-spend accounting + (Stage 2)
-/// witness commitment/nonce. Shared object (consensus-ordered) — agent proposals and
+/// witness commitment/nonce. Shared object (consensus-ordered) - agent proposals and
 /// owner revocations both touch it. Mutating fns are owner-gated; the agent never
 /// holds a key. (CLAUDE.md §5.1)
 module sentinel::mandate;
@@ -50,7 +50,7 @@ fun build(
         registry_id,
         expiry_ms,
         revoked: false,
-        witness_commitment: initial_commitment, // keccak256(preimage_0) — the first one-shot witness
+        witness_commitment: initial_commitment, // keccak256(preimage_0) - the first one-shot witness
         nonce: 0,
     }
 }
@@ -92,7 +92,7 @@ public(package) fun assert_active(m: &Mandate, clock: &Clock) {
 }
 
 /// Mutating spend: rolls the day over (resets spent_today) if needed, then adds `amount`.
-/// Only `payment::pay` calls this — the policy dry-run stays read-only via `effective_spent`.
+/// Only `payment::pay` calls this - the policy dry-run stays read-only via `effective_spent`.
 public(package) fun apply_spend(m: &mut Mandate, amount: u64, clock: &Clock) {
     let today = current_day(clock);
     if (today != m.day_epoch) {
@@ -103,7 +103,7 @@ public(package) fun apply_spend(m: &mut Mandate, amount: u64, clock: &Clock) {
 }
 
 /// Rotate the one-shot witness commitment and advance the nonce. Called by `payment::pay`
-/// AFTER the current witness has verified — the just-used preimage can never validate again.
+/// AFTER the current witness has verified - the just-used preimage can never validate again.
 public(package) fun rotate(m: &mut Mandate, next_commitment: vector<u8>) {
     m.witness_commitment = next_commitment;
     m.nonce = m.nonce + 1;
@@ -113,7 +113,7 @@ public(package) fun rotate(m: &mut Mandate, next_commitment: vector<u8>) {
 
 public fun current_day(clock: &Clock): u64 { clock.timestamp_ms() / MS_PER_DAY }
 
-/// Rollover-aware spent-today WITHOUT mutating — what the pure policy check reads.
+/// Rollover-aware spent-today WITHOUT mutating - what the pure policy check reads.
 public fun effective_spent(m: &Mandate, clock: &Clock): u64 {
     if (current_day(clock) != m.day_epoch) 0 else m.spent_today
 }
