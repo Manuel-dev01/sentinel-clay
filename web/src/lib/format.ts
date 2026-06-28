@@ -14,7 +14,7 @@ export function fmtSui(mist: bigint | string | number, dp = 2): string {
 }
 
 export function shortAddr(a: string | null | undefined, lead = 6, tail = 4): string {
-  if (!a) return '—';
+  if (!a) return '·';
   return a.length > lead + tail + 2 ? `${a.slice(0, lead)}…${a.slice(-tail)}` : a;
 }
 

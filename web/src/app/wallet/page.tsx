@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { AppShell } from '@/components/AppShell';
 import { useSigner } from '@/lib/signer';
@@ -24,13 +25,47 @@ function useBalances(address: string | null) {
   });
 }
 
+async function copyText(text: string): Promise<boolean> {
+  try {
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(text);
+      return true;
+    }
+  } catch {
+    /* fall through to legacy path */
+  }
+  try {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    const ok = document.execCommand('copy');
+    document.body.removeChild(ta);
+    return ok;
+  } catch {
+    return false;
+  }
+}
+
 export default function WalletPage() {
   const { address, ready, busy, connect, faucet, disconnect } = useSigner();
   const { data, isFetching } = useBalances(address);
   const sui = data ? suiFromMist(data.sui) : 0;
+  const [copied, setCopied] = useState(false);
+
+  async function onCopy() {
+    if (!address) return;
+    const ok = await copyText(address);
+    if (ok) {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  }
 
   return (
-    <AppShell title="Mandate wallet" subtitle="self-custodial — the agent can read it, only Move can authorize a transfer">
+    <AppShell title="Mandate wallet" subtitle="self-custodial · the agent can read it, only Move can authorize a transfer">
       <div className="flex flex-col gap-6 p-[30px] lg:flex-row">
         {/* balance */}
         <div className="flex flex-[1.2] flex-col border border-hairsoft p-[30px]">
@@ -49,15 +84,15 @@ export default function WalletPage() {
           <div className="my-7 h-px bg-hairsoft" />
           <div className="mb-3.5 font-mono text-[11px] font-semibold tracking-[0.14em] text-muted">WALLET ADDRESS</div>
           <div className="flex items-center justify-between border border-hairsoft bg-panel px-4 py-3.5 font-mono text-[13px] text-cream">
-            <span>{address ? shortAddr(address, 10, 8) : '— not connected —'}</span>
+            <span>{address ? shortAddr(address, 10, 8) : 'not connected'}</span>
             {address && (
-              <button className="text-gold" onClick={() => navigator.clipboard?.writeText(address)}>
-                copy
+              <button className="text-gold" onClick={onCopy}>
+                {copied ? 'copied ✓' : 'copy'}
               </button>
             )}
           </div>
           <div className="mt-auto pt-6 font-mono text-xs leading-relaxed text-muted">
-            The agent can read this wallet and propose trades from it — but only the Move policy can authorize a
+            The agent can read this wallet and propose trades from it · but only the Move policy can authorize a
             transfer. Custody never leaves your browser.
           </div>
         </div>
@@ -72,7 +107,7 @@ export default function WalletPage() {
             <>
               <p className="mb-6 font-sans text-[15px] leading-relaxed text-[#cfd8ce]">
                 {ENOKI_ENABLED
-                  ? 'Sign in with Google — no wallet, no seed phrase, no SUI. Gas is sponsored.'
+                  ? 'Sign in with Google · no wallet, no seed phrase, no SUI. Gas is sponsored.'
                   : 'Spin up a self-custodial testnet wallet in your browser. (Google / zkLogin onboarding activates once Enoki keys are set.)'}
               </p>
               <button

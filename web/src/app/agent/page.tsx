@@ -9,7 +9,7 @@ import { useSigner } from '@/lib/signer';
 import { useMandate } from '@/lib/mandateStore';
 import { readMandate, effectiveSpent, type MandateState } from '@/lib/onchain';
 import { buildChecks, evaluateOnChain, codeLabel, type Check } from '@/lib/predicate';
-import { settleProposal, abortCodeFromError } from '@/lib/settle';
+import { settleProposal, replaySettle, abortCodeFromError } from '@/lib/settle';
 import { recordVerdict } from '@/lib/audit';
 import { MARKETS, PACKAGE_ID, EXPLORER } from '@/lib/env';
 import type { Proposal } from '@/lib/agentTypes';
@@ -64,12 +64,12 @@ export default function Dashboard() {
   const pct = m && m.capMist > 0n ? Math.min(100, Number((spent * 10000n) / m.capMist) / 100) : 0;
   const expiresInH = m ? Math.max(0, Math.round((Number(m.expiryMs) - now) / 3600_000)) : 0;
 
-  async function enrich(p: Proposal): Promise<Row> {
+  async function enrich(p: Proposal, mState: MandateState | undefined): Promise<Row> {
     let checks: Check[] | undefined;
     let onchainCode: number | undefined;
     try {
       const marketAllowed = MARKETS.some((x) => x.id === p.poolId);
-      if (m) checks = buildChecks(m, p, Date.now(), marketAllowed);
+      if (mState) checks = buildChecks(mState, p, Date.now(), marketAllowed);
       onchainCode = await evaluateOnChain(p, { mandateId: mandate!.mandateId, registryId: mandate!.registryId });
     } catch {
       /* best-effort */
@@ -92,7 +92,7 @@ export default function Dashboard() {
         return;
       }
       if (j.error) throw new Error(j.error);
-      const row = await enrich(j.proposal as Proposal);
+      const row = await enrich(j.proposal as Proposal, mq.data);
       setRows((rs) => [row, ...rs].slice(0, 8));
     } catch (e: any) {
       setErr(e?.message ?? String(e));
@@ -103,25 +103,34 @@ export default function Dashboard() {
 
   async function approve(idx: number) {
     const row = rows[idx];
+    setErr('');
     setRows((rs) => rs.map((r, i) => (i === idx ? { ...r, status: 'settling' } : r)));
     try {
-      const res = await settleProposal(row.p, mandate!, signExecute);
+      const settleFn = row.p.kind === 'replay' ? replaySettle : settleProposal;
+      const res = await settleFn(row.p, mandate!, signExecute);
       const ok = res.status === 'success';
       const settled = (res.events ?? []).find((e: any) => String(e.type).includes('PaymentSettled'));
+      const code = ok ? undefined : abortCodeFromError((res.effects as any)?.status?.error ?? '') ?? undefined;
       setRows((rs) =>
         rs.map((r, i) =>
           i === idx
-            ? { ...r, status: ok ? 'settled' : 'aborted', digest: res.digest, baseOut: settled?.parsedJson?.base_out }
+            ? { ...r, status: ok ? 'settled' : 'aborted', digest: res.digest, code, baseOut: settled?.parsedJson?.base_out }
             : r,
         ),
       );
-      audit(row.p, ok ? 'APPROVED' : 'ABORTED', undefined, res.digest);
+      audit(row.p, ok ? 'APPROVED' : 'ABORTED', code, res.digest);
       mq.refetch();
     } catch (e: any) {
       const msg = e?.message ?? String(e);
       const code = abortCodeFromError(msg) ?? undefined;
       setRows((rs) => rs.map((r, i) => (i === idx ? { ...r, status: 'aborted', code } : r)));
+      setErr(
+        /insufficient|balance|gas|budget/i.test(msg) && !code
+          ? 'Insufficient balance to settle. Faucet more SUI on the Wallet screen.'
+          : msg,
+      );
       audit(row.p, 'ABORTED', code);
+      mq.refetch();
     }
   }
 
@@ -147,10 +156,10 @@ export default function Dashboard() {
               <div className="h-full bg-gold" style={{ width: `${pct}%` }} />
             </div>
             <div className="font-mono text-base font-bold text-cream">
-              {fmtSui(spent)} <span className="text-muted">/ {m ? fmtSui(m.capMist) : '—'} SUI</span>
+              {fmtSui(spent)} <span className="text-muted">/ {m ? fmtSui(m.capMist) : '·'} SUI</span>
             </div>
           </div>
-          <Stat label="NONCE" value={m ? m.nonce.toString() : '—'} sub="one-shot, rotates each settle" />
+          <Stat label="NONCE" value={m ? m.nonce.toString() : '·'} sub="one-shot, rotates each settle" />
           <Stat label="PROPOSALS" value={rows.length.toString()} sub={`${rows.filter((r) => r.status === 'settled').length} settled · ${rows.filter((r) => r.status === 'aborted').length} aborted`} />
           <Stat label="EXPIRES IN" value={`${expiresInH}h`} sub={m?.revoked ? 'revoked' : 'auto-revoke'} accent />
         </div>
@@ -189,7 +198,7 @@ export default function Dashboard() {
         <div className="font-mono text-[11px] font-semibold tracking-[0.12em] text-muted">OPEN PROPOSALS</div>
         {rows.length === 0 && (
           <div className="border border-dashed border-hairsoft p-8 text-center font-mono text-[13px] text-dim">
-            No proposals yet. Click “Agent: propose a trade” — the Yield Hunter reads DeepBook and proposes one. You approve;
+            No proposals yet. Click “Agent: propose a trade” · the Yield Hunter reads DeepBook and proposes one. You approve;
             Move enforces.
           </div>
         )}
@@ -214,7 +223,7 @@ function Stat({ label, value, sub, accent }: { label: string; value: string; sub
 function ProposalCard({ row, idx, onApprove, onReject, owner }: { row: Row; idx: number; onApprove: (i: number) => void; onReject: () => void; owner: string }) {
   const { p, checks, onchainCode, status } = row;
   const sui = (Number(p.amountMist) / 1e9).toFixed(2);
-  const deep = p.expectedOut ? (Number(p.expectedOut) / DEEP_DP).toFixed(3) : '—';
+  const deep = p.expectedOut ? (Number(p.expectedOut) / DEEP_DP).toFixed(3) : '·';
   const rogue = p.kind !== 'compliant';
   const verdict = onchainCode === undefined ? '…' : codeLabel(onchainCode);
   const verdictOk = onchainCode === 0;

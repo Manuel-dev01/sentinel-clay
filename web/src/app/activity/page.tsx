@@ -70,7 +70,7 @@ export default function ActivityPage() {
       <div className="flex flex-col gap-3 p-[30px]">
         <div className="border border-approve/30 bg-panel p-4 font-mono text-[13px] text-sage">
           Settled payments are read live from <span className="text-cream">PaymentSettled</span> events on
-          package {shortAddr(PACKAGE_ID)}. Rogue / replayed trades <span className="text-abort">abort and revert</span> —
+          package {shortAddr(PACKAGE_ID)}. Rogue / replayed trades <span className="text-abort">abort and revert</span> ·
           they never settle, so they leave nothing here. That absence is the point.
         </div>
 
@@ -137,7 +137,7 @@ function WalrusAuditTrail({ mandateId, owner }: { mandateId: string; owner: stri
       </div>
       {entries.length === 0 ? (
         <div className="border border-dashed border-hairsoft p-6 text-center font-mono text-[12px] text-dim">
-          No audit blobs yet — approve or reject a proposal to write one.
+          No audit blobs yet · approve or reject a proposal to write one.
         </div>
       ) : (
         <div className="flex flex-col gap-2">

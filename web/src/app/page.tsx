@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { Sigil } from '@/components/Sigil';
 import { PolicySimulator } from '@/components/PolicySimulator';
+import { CountUp } from '@/components/CountUp';
 
 const ML = 'font-mono text-xs font-semibold tracking-[0.16em] text-gold';
 
@@ -51,12 +52,13 @@ export default function Landing() {
     <div className="w-full overflow-x-hidden">
       <Nav />
 
-      {/* HERO — the budget is the hero */}
+      {/* HERO · the budget is the hero */}
       <div className="mx-auto max-w-[1180px] px-10 pb-[76px] pt-[72px]">
         <div className={`${ML} mb-7`}>DAILY BUDGET · ENFORCED ON-CHAIN</div>
         <div className="mb-[18px] flex items-end justify-between">
           <div className="font-sans text-[132px] font-black leading-[0.8] tracking-[-0.05em] text-cream">
-            $48<span className="text-[60px] text-[#7fa08f]">.20</span>
+            <CountUp to={48} prefix="$" />
+            <span className="text-[60px] text-[#7fa08f]">.20</span>
           </div>
           <div className="pb-4 font-mono text-[26px] font-bold text-muted">of $50.00</div>
         </div>
@@ -80,7 +82,7 @@ export default function Landing() {
             </h1>
             <p className="mt-[22px] max-w-[520px] font-sans text-lg leading-relaxed text-[#cfd8ce]">
               An AI agent hunts yield on DeepBook and proposes trades. A Move policy enforces your budget on
-              every one — the agent only proposes, and never holds a key.
+              every one · the agent only proposes, and never holds a key.
             </p>
             <div className="mt-8 flex items-center gap-3.5">
               <Link href="/wallet" className="bg-gold px-7 py-[17px] font-sans text-[15px] font-bold text-ink">
@@ -107,8 +109,8 @@ export default function Landing() {
       <div className="border-y border-hair">
         <div className="mx-auto flex max-w-[1180px]">
           <Stat value="0" label="KEYS HELD BY AGENT" />
-          <Stat value={<><span>100</span><span className="text-[17px] text-muted">%</span></>} label="ON-CHAIN ENFORCEMENT" />
-          <Stat value="2" label="ROGUE TRADES STOPPED" />
+          <Stat value={<><CountUp to={100} /><span className="text-[17px] text-muted">%</span></>} label="ON-CHAIN ENFORCEMENT" />
+          <Stat value={<CountUp to={2} />} label="ROGUE TRADES STOPPED" />
           <Stat value={<>7<span className="text-[17px] text-muted">d</span></>} label="MANDATE EXPIRY" />
         </div>
       </div>
@@ -117,7 +119,7 @@ export default function Landing() {
       <div className="mx-auto max-w-[1180px] px-10 py-[100px]">
         <div className="mb-[54px] flex items-end justify-between">
           <div>
-            <div className={`${ML} mb-[18px]`}>01 — EXECUTION PATH</div>
+            <div className={`${ML} mb-[18px]`}>01 · EXECUTION PATH</div>
             <h2 className="m-0 max-w-[560px] font-sans text-[46px] font-extrabold leading-[1.05] tracking-tight text-cream">
               Every payment runs the gauntlet.
             </h2>
@@ -128,7 +130,7 @@ export default function Landing() {
         </div>
         <div className="flex border-t border-hair">
           <PathStep n="01" accent="var(--color-gold)" title="Propose" body="Yield Hunter signs nothing. It posts an intent: market, size, direction." />
-          <PathStep n="02" accent="var(--color-cream)" title="seal_approve" body="Budget, asset class, market, expiry, nonce — checked atomically." />
+          <PathStep n="02" accent="var(--color-cream)" title="seal_approve" body="Budget, asset class, market, expiry, nonce · checked atomically." />
           <PathStep n="03" accent="var(--color-cream)" title="check-rotate-transfer" body="Authorization is consumed and rotated in the same call. No replay." />
           <PathStep n="04" accent="var(--color-approve)" title="Settle / revert" body="Pass: the swap settles. Fail: the whole tx aborts. Nothing between." />
         </div>
@@ -138,13 +140,13 @@ export default function Landing() {
       <div id="sim" className="border-y border-hair bg-panel">
         <div className="mx-auto max-w-[1180px] px-10 py-[100px]">
           <div className="mb-11">
-            <div className={`${ML} mb-[18px]`}>02 — TRY THE POLICY · LIVE</div>
+            <div className={`${ML} mb-[18px]`}>02 · TRY THE POLICY · LIVE</div>
             <h2 className="m-0 font-sans text-[46px] font-extrabold leading-[1.05] tracking-tight text-cream">
               Set a budget. Try to break it.
             </h2>
             <p className="mt-[18px] max-w-[560px] font-sans text-base leading-relaxed text-[#cfd8ce]">
               Propose trades and watch the budget fill. Push past the cap, or replay an old authorization, and the
-              Move policy aborts it — the same logic, the same error codes the chain enforces.
+              Move policy aborts it · the same logic, the same error codes the chain enforces.
             </p>
           </div>
           <PolicySimulator />
@@ -153,7 +155,7 @@ export default function Landing() {
 
       {/* MANDATE RULES */}
       <div className="mx-auto max-w-[1180px] px-10 py-[100px]">
-        <div className={`${ML} mb-[18px]`}>03 — THE MANDATE</div>
+        <div className={`${ML} mb-[18px]`}>03 · THE MANDATE</div>
         <h2 className="mb-[50px] mt-0 max-w-[620px] font-sans text-[46px] font-extrabold leading-[1.05] tracking-tight text-cream">
           Rules a human can read. Enforcement a chain can prove.
         </h2>
@@ -197,11 +199,11 @@ export default function Landing() {
       {/* PRINCIPLES */}
       <div className="border-t border-hair">
         <div className="mx-auto max-w-[1180px] px-10 py-[100px]">
-          <div className={`${ML} mb-[50px]`}>04 — PRINCIPLES</div>
+          <div className={`${ML} mb-[50px]`}>04 · PRINCIPLES</div>
           <div className="grid grid-cols-1 gap-y-10 md:grid-cols-4 md:gap-0">
             {[
               ['01', 'Proposes, never holds.', 'The agent submits trades. It never touches a key.', 'var(--color-gold)'],
-              ['02', 'Rules in plain words.', 'Budget, assets, markets, expiry — readable by a human.', 'var(--color-cream)'],
+              ['02', 'Rules in plain words.', 'Budget, assets, markets, expiry · readable by a human.', 'var(--color-cream)'],
               ['03', 'Enforced in Move.', 'seal_approve + atomic check-rotate-transfer gate every payment.', 'var(--color-cream)'],
               ['04', 'Refusal is provable.', 'A rogue or replayed trade aborts on-chain, in the open.', 'var(--color-cream)'],
             ].map(([n, t, b, c]) => (
@@ -244,7 +246,7 @@ export default function Landing() {
               <div className="font-sans text-base font-extrabold text-cream">SENTINEL</div>
             </div>
             <p className="m-0 font-sans text-sm leading-relaxed text-muted">
-              Key-safe DeFi treasury on Sui. The agent proposes — the chain disposes.
+              Key-safe DeFi treasury on Sui. The agent proposes · the chain disposes.
             </p>
           </div>
           <div className="flex gap-[60px]">

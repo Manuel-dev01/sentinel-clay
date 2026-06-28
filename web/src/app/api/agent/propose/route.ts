@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server';
 import { DEEPBOOK } from '@/lib/env';
-import { readMandate, remainingMist, quoteDeepOut } from '@/lib/onchain';
+import { readMandate, remainingMist, quoteDeepOut, suiBalanceMist } from '@/lib/onchain';
 import type { Proposal } from '@/lib/agentTypes';
 
 const MIST = 1_000_000_000;
 
 // The keyless Yield Hunter. Reads on-chain mandate + DeepBook state, asks DeepSeek for a trade within
-// budget (deterministic heuristic fallback), and returns a PROPOSAL — pure data. It never signs.
+// budget (deterministic heuristic fallback), and returns a PROPOSAL · pure data. It never signs.
 async function deepseekAmount(remainingSui: number, midNote: string): Promise<{ sui: number; rationale: string } | null> {
   const key = process.env.DEEPSEEK_API_KEY;
   if (!key) return null;
@@ -50,29 +50,36 @@ export async function POST(req: Request) {
 
     const m = await readMandate(mandateId);
     const now = Date.now();
-    const remainingMistVal = remainingMist(m, now);
-    const remainingSui = Number(remainingMistVal) / MIST;
+    const remainingSui = Number(remainingMist(m, now)) / MIST;
+
+    // Size to what the wallet can actually afford (coin-input spends real SUI; leave gas headroom),
+    // not just the budget · otherwise a "compliant" trade fails on insufficient balance, not policy.
+    const balanceSui = Number(await suiBalanceMist(m.owner)) / MIST;
+    const affordable = Math.max(0, balanceSui - 0.05);
+    const ceiling = Math.min(remainingSui, affordable);
 
     if (remainingSui <= 0.001) {
-      return NextResponse.json({ full: true, message: 'Daily budget spent — the agent is holding until rollover.' });
+      return NextResponse.json({ full: true, message: 'Daily budget spent; the agent is holding until rollover.' });
+    }
+    if (affordable <= 0.001) {
+      return NextResponse.json({ full: true, message: 'Wallet balance too low to trade; use the faucet on the Wallet screen.' });
     }
 
     // best-effort live quote for a reference 1-SUI clip
     const q = await quoteDeepOut(BigInt(MIST));
     const midNote = q ? `~${(Number(q) / MIST).toFixed(3)} DEEP per 1 SUI right now.` : '';
 
-    const ds = await deepseekAmount(remainingSui, midNote);
-    const cap = remainingSui;
+    const ds = await deepseekAmount(ceiling, midNote);
     let sui: number;
     let rationale: string;
     let source: Proposal['source'];
     if (ds) {
-      sui = Math.min(ds.sui, cap);
+      sui = Math.min(ds.sui, ceiling);
       rationale = ds.rationale;
       source = 'deepseek';
     } else {
-      sui = Math.max(0.01, Math.min(cap, +(cap * 0.3).toFixed(2)));
-      rationale = `0.3% spread on SUI/DEEP; sized to ${((sui / cap) * 100).toFixed(0)}% of remaining budget.`;
+      sui = Math.max(0.01, +(ceiling * 0.85).toFixed(3));
+      rationale = `Spread capture on SUI/DEEP; sized to ${((sui / ceiling) * 100).toFixed(0)}% of the affordable budget.`;
       source = 'heuristic';
     }
     const amountMist = BigInt(Math.round(sui * MIST));

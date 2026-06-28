@@ -39,6 +39,12 @@ export async function readMandate(mandateId: string): Promise<MandateState> {
   };
 }
 
+/** Owner's SUI balance in mist (for sizing proposals to what the wallet can actually afford). */
+export async function suiBalanceMist(owner: string): Promise<bigint> {
+  const b = await suiClient().getBalance({ owner, coinType: '0x2::sui::SUI' });
+  return BigInt(b.totalBalance);
+}
+
 /** Rollover-aware spent-today (mirrors mandate::effective_spent). */
 export function effectiveSpent(m: MandateState, nowMs: number): bigint {
   const day = BigInt(Math.floor(nowMs)) / MS_PER_DAY;

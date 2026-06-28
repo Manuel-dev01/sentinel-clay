@@ -24,7 +24,7 @@ export function PolicySimulator() {
           id: lid,
           label,
           detail: v.detail,
-          status: v.ok === true ? 'APPROVED' : v.ok === false && v.code === -1 ? '—' : 'ABORTED',
+          status: v.ok === true ? 'APPROVED' : v.ok === false && v.code === -1 ? '·' : 'ABORTED',
           ok: v.ok,
         },
         ...l,
@@ -42,8 +42,8 @@ export function PolicySimulator() {
       label,
       v,
       v.ok
-        ? `Approved. ${state.spent.toFixed(2)} of ${s.cap.toFixed(2)} SUI spent today — the agent stayed inside its mandate.`
-        : `Blocked on-chain. The trade exceeded the daily budget, so the whole transaction reverted — no funds moved.`,
+        ? `Approved. ${state.spent.toFixed(2)} of ${s.cap.toFixed(2)} SUI spent today · the agent stayed inside its mandate.`
+        : `Blocked on-chain. The trade exceeded the daily budget, so the whole transaction reverted · no funds moved.`,
     );
   };
 
@@ -53,8 +53,8 @@ export function PolicySimulator() {
       v.code === -1 ? 'replay · no prior authorization' : `replay · reused authorization`,
       v,
       v.code === -1
-        ? 'Nothing to replay yet — approve a trade, then replay its authorization.'
-        : 'Blocked on-chain. The authorization was already consumed and rotated — a replayed approval can never settle.',
+        ? 'Nothing to replay yet · approve a trade, then replay its authorization.'
+        : 'Blocked on-chain. The authorization was already consumed and rotated · a replayed approval can never settle.',
     );
   };
 
@@ -144,8 +144,8 @@ export function PolicySimulator() {
         ) : (
           <div className="flex min-h-[280px] flex-col">
             {log.map((row) => {
-              const accent = row.ok === true ? 'var(--color-approve)' : row.ok === false && row.status === '—' ? 'var(--color-muted)' : 'var(--color-abort)';
-              const bg = row.ok === true ? '#0e3a2c' : row.status === '—' ? '#0e3a2c' : '#2a1410';
+              const accent = row.ok === true ? 'var(--color-approve)' : row.ok === false && row.status === '·' ? 'var(--color-muted)' : 'var(--color-abort)';
+              const bg = row.ok === true ? '#0e3a2c' : row.status === '·' ? '#0e3a2c' : '#2a1410';
               return (
                 <div
                   key={row.id}

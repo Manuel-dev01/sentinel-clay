@@ -72,7 +72,7 @@ export function propose(s: SimState, amount: number): { state: SimState; verdict
 
 export function replay(s: SimState): AbortVerdict {
   if (s.lastSettledNonce === null) {
-    return { ok: false, code: -1, label: '—', detail: 'approve a trade first, then replay its authorization' };
+    return { ok: false, code: -1, label: '·', detail: 'approve a trade first, then replay its authorization' };
   }
   const n = s.lastSettledNonce;
   return {

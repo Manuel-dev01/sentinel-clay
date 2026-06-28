@@ -1,10 +1,10 @@
 import { LocalWitnessProvider } from '@sentinel/sdk';
 
 // The one-shot witness seed lives ONLY in this browser (the user's custody); the agent never sees it.
-// It is a random 32-byte seed kept in localStorage keyed by owner — NOT derived from a signature, because
+// It is a random 32-byte seed kept in localStorage keyed by owner · NOT derived from a signature, because
 // zkLogin signatures rotate per session (different ephemeral key) and would not reproduce the mandate's
 // on-chain commitment after re-login. A leaked seed can still only authorize POLICY-COMPLIANT trades
-// (Move re-checks every payment), so it can never overspend or drain — a witness is not a key.
+// (Move re-checks every payment), so it can never overspend or drain · a witness is not a key.
 function getOrCreateSeed(owner: string): Uint8Array {
   const k = `sentinel.seed.${owner.toLowerCase()}`;
   const existing = typeof window !== 'undefined' ? localStorage.getItem(k) : null;

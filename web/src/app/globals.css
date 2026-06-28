@@ -65,7 +65,7 @@ body {
   animation: pulseDot 1.6s ease-in-out infinite;
 }
 
-/* range slider — gold thumb on a dark track */
+/* range slider · gold thumb on a dark track */
 input[type='range'] {
   -webkit-appearance: none;
   appearance: none;

@@ -1,9 +1,3 @@
-<!--
-  README skeleton for Sentinel. Pre-structured for CLAY hackathon judges.
-  Fill the {{PLACEHOLDERS}}. Keep it scannable — judges skim. The first screen
-  must land the thesis + the wow + the Package ID. Delete these comments before shipping.
--->
-
 <div align="center">
 
 # 🛡️ Sentinel
@@ -16,7 +10,7 @@
 
 </div>
 
-> **Build status (2026-06-27):** Stages 0–5 complete & live — a full Next.js app on
+> **Build status (2026-06-27):** Stages 0–5 complete & live - a full Next.js app on
 > **[sentinel-clay-web.vercel.app](https://sentinel-clay-web.vercel.app/)** over the testnet Move
 > package. **Google login (zkLogin via Enoki) with sponsored gas**, a mandate builder that arms an
 > on-chain policy in one signature, a **keyless AI agent** (DeepSeek "Yield Hunter") that reads
@@ -24,17 +18,17 @@
 > audit trail of every proposal+verdict. **32 Move tests + 6 TS tests** pass; a compliant trade
 > **fills on real DeepBook v3** (`pay_real` 0.5 SUI → **20 DEEP**, `5SMBQo8B…`); rogue/over-cap and
 > replayed trades **abort on-chain** (`E_OVER_CAP` `DcUUFG8b…`, `E_REPLAY`). The agent process holds
-> **no key** — it only proposes; the user's zkLogin session signs; Move enforces.
+> **no key** - it only proposes; the user's zkLogin session signs; Move enforces.
 
 ---
 
 ## The problem
 
-Letting an AI agent trade your funds means handing it your keys. One prompt injection, one buggy strategy, one rogue process — and the agent drains the wallet. Every "AI trading bot" is a custody time bomb.
+Letting an AI agent trade your funds means handing it your keys. One prompt injection, one buggy strategy, one rogue process - and the agent drains the wallet. Every "AI trading bot" is a custody time bomb.
 
 ## What Sentinel does
 
-You fund a self-custodial **mandate wallet** and set human-readable rules — *max $50/day, stablecoin pairs only, these DeepBook markets, expires in 30 days.* You switch on an AI agent that hunts yield and arbitrage on DeepBook. **The agent never holds a key.** It can only *propose* a trade. Every payment is gated by an on-chain Move policy that re-checks the mandate and consumes a one-shot authorization. An over-cap, wrong-market, or replayed trade **aborts on-chain** — provably, every time.
+You fund a self-custodial **mandate wallet** and set human-readable rules - *max $50/day, stablecoin pairs only, these DeepBook markets, expires in 30 days.* You switch on an AI agent that hunts yield and arbitrage on DeepBook. **The agent never holds a key.** It can only *propose* a trade. Every payment is gated by an on-chain Move policy that re-checks the mandate and consumes a one-shot authorization. An over-cap, wrong-market, or replayed trade **aborts on-chain** - provably, every time.
 
 > Off-chain authorization is an optimization. On-chain Move is the law.
 
@@ -50,18 +44,32 @@ You fund a self-custodial **mandate wallet** and set human-readable rules — *m
 | 5 | Agent replays a used authorization | ⛔ aborts on-chain `E_REPLAY` | **live on testnet** |
 | 6 | Open the Walrus audit log | 🔍 every proposal+verdict, immutable on Walrus | **live in app** (Seal-encrypted blobs) |
 
-Real testnet transactions (committed, explorer-visible): **real DeepBook fill** `FSiwLoHG…`
-(0.5 SUI → 20.00 DEEP); MockPool fill `38Q1RQwc…` (`base_out:80`); aborts `E_OVER_CAP` on the
-real-DeepBook path `EGDZtuoc…` (and mock `ByywWqRL…`), `E_MARKET` tx `FfAzTn3k…`, `E_REPLAY` tx
-`3aNnknYg…`. Full transcript in [DEPLOYMENTS.md](DEPLOYMENTS.md).
+Real testnet transactions (committed, explorer-visible): **real DeepBook fill** `5SMBQo8B…`
+(0.5 SUI → 20 DEEP); `seal_approve` compliant `3mVozzJP…`; over-cap abort `E_OVER_CAP` `DcUUFG8b…`;
+`E_REPLAY` `3aNnknYg…`. Full transcript in [DEPLOYMENTS.md](DEPLOYMENTS.md).
 
-▶️ **[2-minute demo video]({{YOUTUBE_URL}})**
+▶️ **Demo:** run [DEMO_CHECKLIST.md](DEMO_CHECKLIST.md) against the [live app](https://sentinel-clay-web.vercel.app/).
 
 ## Architecture
 
-{{ARCHITECTURE_DIAGRAM — paste the architecture diagram or an image}}
+```
+  Browser (your custody)                    Server (keyless)              Sui testnet
+  ┌─────────────────────────┐      propose   ┌──────────────────┐
+  │ zkLogin / demo wallet    │ ◄───────────── │ /api/agent       │  reads DeepBook + mandate
+  │  · witness seed (local)  │   PaymentIntent│  DeepSeek "Yield  │  (no keypair, only proposes)
+  │  · approve → sign        │                │  Hunter" + fallbk │
+  └───────────┬─────────────┘                └──────────────────┘
+              │ pay_real (Enoki-sponsored gas)
+              ▼
+  ┌───────────────────────────────────────────────────────────────────────────────┐
+  │  Move package  ·  payment::pay → policy::check (budget·asset·market·expiry·nonce)│
+  │                  → verify+rotate one-shot Witness → execute → emit / ABORT       │
+  └───────────────┬───────────────────────────────────────────┬─────────────────────┘
+                  ▼                                             ▼
+            DeepBook v3 (fill)                          Walrus (Seal-encrypted audit blob)
+```
 
-**The core invariant:** the *same* predicate logic gates both the off-chain Seal key-server dry-run and the on-chain `payment::pay` enforcement — they share code. A verdict released off-chain that violates the mandate is impossible to *settle* on-chain, because the Move contract re-checks and aborts. We prove this with a differential test (see [Security](#security)).
+**The core invariant:** the *same* predicate logic gates both the off-chain Seal key-server dry-run and the on-chain `payment::pay` enforcement - they share code. A verdict released off-chain that violates the mandate is impossible to *settle* on-chain, because the Move contract re-checks and aborts. We prove this with a differential test (see [Security](#security)).
 
 ### Sui Stack used
 
@@ -70,15 +78,15 @@ real-DeepBook path `EGDZtuoc…` (and mock `ByywWqRL…`), `E_MARKET` tx `FfAzTn
 | **Move (Sui)** | Mandate object, dry-runnable `seal_approve` predicate, one-shot `Witness` resource (no `copy`/`drop`/`store`), atomic check-rotate-transfer |
 | **Seal** | Threshold encryption gates **release of the one-shot witness secret**: `seal_approve` (same `policy::check` as `pay`) decides whether key servers release the preimage; rogue intent denied off-chain + re-aborted on-chain. Also encrypts the audit log (owner-only). _wired in `sdk/`; on-chain predicate proven live_ |
 | **DeepBook v3** | On-chain trade execution venue; the agent reads live mid/quote via dev-inspect |
-| **Walrus** | Immutable audit log — every proposal+verdict is a Seal-encrypted blob (testnet publisher/aggregator). _live in app_ |
-| **zkLogin + Enoki sponsored tx** | Google login, no seed phrase, gas sponsored — judge needs no wallet/SUI. _live in app (dapp-kit + @mysten/enoki)_ |
+| **Walrus** | Immutable audit log - every proposal+verdict is a Seal-encrypted blob (testnet publisher/aggregator). _live in app_ |
+| **zkLogin + Enoki sponsored tx** | Google login, no seed phrase, gas sponsored - judge needs no wallet/SUI. _live in app (dapp-kit + @mysten/enoki)_ |
 | **DeepSeek agent** | The keyless "Yield Hunter" runs server-side (`/api/agent`), proposes trades with plain-English rationale; never holds a key |
 | **Nautilus** *(stretch)* | Agent strategy in a TEE with on-chain attestation |
 
 ## Move highlights (for reviewers)
 
-- **`Witness`** has no `copy`, no `drop`, no `store` — Move's type system enforces one-shot authorization at **compile time**. It cannot be duplicated, silently dropped, or stashed for replay.
-- **`seal_approve` and `payment::pay` call the identical `policy::check`** — off-chain authorization can never diverge from on-chain enforcement.
+- **`Witness`** has no `copy`, no `drop`, no `store` - Move's type system enforces one-shot authorization at **compile time**. It cannot be duplicated, silently dropped, or stashed for replay.
+- **`seal_approve` and `payment::pay` call the identical `policy::check`** - off-chain authorization can never diverge from on-chain enforcement.
 - **Atomic check → rotate witness commitment → execute**, all in one Programmable Transaction Block; any violation reverts the whole transaction.
 
 ## Security
@@ -103,9 +111,9 @@ Run: `sui move test`
 | What | ID / URL | Date |
 |------|----------|------|
 | **Live app** | https://sentinel-clay-web.vercel.app/ | 2026-06-27 |
-| Testnet package (current — Seal adapter, vendored clean build) | `0x7a7ee7186ccb69b2b250e7b08fc31b8ccfadae9a7596a352112f7aa3e72a77f9` | 2026-06-26 |
+| Testnet package (current - Seal adapter, vendored clean build) | `0x7a7ee7186ccb69b2b250e7b08fc31b8ccfadae9a7596a352112f7aa3e72a77f9` | 2026-06-26 |
 | App market registry (shared, DEEP_SUI allowlisted) | `0x8b49d0d7afde529a8784f3f255b1fa2168519988aae242f5bf3a881b6a7f7c1f` | 2026-06-27 |
-| Testnet package (Stage 3.1 — real DeepBook fill) | `0xd3dc1607b52c49864e7298846dd0440ae8f49e3cc130babacc267697718d9a2e` | 2026-06-26 |
+| Testnet package (Stage 3.1 - real DeepBook fill) | `0xd3dc1607b52c49864e7298846dd0440ae8f49e3cc130babacc267697718d9a2e` | 2026-06-26 |
 
 Fresh Package ID per checkpoint during development; full history + runtime object IDs and the
 live abort/replay tx digests are in [DEPLOYMENTS.md](DEPLOYMENTS.md).
@@ -114,12 +122,12 @@ live abort/replay tx digests are in [DEPLOYMENTS.md](DEPLOYMENTS.md).
 ```
 sentinel/   Move package (mandate · policy · payment · seal_policy · execution) + vendored deepbook
 sdk/        TypeScript: AuthorizationProvider (LocalWitness + Seal), PaymentClient, SealAuditLog
-web/        Next.js app — landing, mandate builder, keyless agent, settle, Walrus audit
+web/        Next.js app - landing, mandate builder, keyless agent, settle, Walrus audit
 ```
 
 ## Run it locally
 ```bash
-# Move package — DeepBook is vendored (vendor/deepbook, corrected Published.toml) so a fresh clone
+# Move package - DeepBook is vendored (vendor/deepbook, corrected Published.toml) so a fresh clone
 # builds + links to live testnet DeepBook with NO --allow-dirty and no cache edits.
 cd sentinel && sui move build && sui move test          # 32 passed
 
@@ -129,7 +137,7 @@ pnpm --filter @sentinel/sdk test                         # 6 passed (keccak↔Mo
 pnpm --filter web dev                                    # → http://localhost:3000
 ```
 Without any keys the app runs on a **self-custodial demo wallet** (browser keypair + faucet) and the
-agent uses a deterministic heuristic — so it works end-to-end out of the box. Add the keys below to
+agent uses a deterministic heuristic - so it works end-to-end out of the box. Add the keys below to
 switch on Google/zkLogin onboarding and the DeepSeek agent.
 
 ### Environment (`web/.env.local`; see `web/.env.example`)
@@ -138,7 +146,7 @@ switch on Google/zkLogin onboarding and the DeepSeek agent.
 | `NEXT_PUBLIC_ENOKI_API_KEY` / `ENOKI_SECRET_KEY` | zkLogin + sponsored gas | [portal.enoki.mystenlabs.com](https://portal.enoki.mystenlabs.com) |
 | `NEXT_PUBLIC_GOOGLE_CLIENT_ID` | Google OAuth (register it in Enoki too) | [console.cloud.google.com](https://console.cloud.google.com) |
 | `DEEPSEEK_API_KEY` | the Yield Hunter agent (server-only) | [platform.deepseek.com](https://platform.deepseek.com) |
-| `NEXT_PUBLIC_SENTINEL_PKG`, `NEXT_PUBLIC_APP_REGISTRY` | on-chain ids (defaults shipped) | — |
+| `NEXT_PUBLIC_SENTINEL_PKG`, `NEXT_PUBLIC_APP_REGISTRY` | on-chain ids (defaults shipped) | - |
 
 > **Deploying to Vercel:** set these in **Project → Settings → Environment Variables** (`.env.local`
 > is local-only and gitignored), then redeploy. Add your Vercel URL to the Google OAuth origins and the
@@ -153,8 +161,10 @@ over-cap → aborts `E_OVER_CAP` → **replay** → aborts `E_REPLAY` → **Acti
 Mainnet deploy · Nautilus-attested agent strategy · multi-asset mandate vault (Model B) · Walrus Site + SuiNS.
 
 ## Built for
+The **CLAY Hackathon** (Code Like A Yeti) on Sui, by Emmanuel Olamiye.
 
-The **CLAY Hackathon** (Code Like A Yeti) — hosted by Lofi the Yeti, building on Sui. {{TEAM/CONTACT}}
+## License
+MIT.
 
 ---
 

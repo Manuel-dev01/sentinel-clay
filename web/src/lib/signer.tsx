@@ -10,6 +10,7 @@ import {
   useDisconnectWallet,
   useSignPersonalMessage,
   useSignTransaction,
+  useSignAndExecuteTransaction,
   useSuiClient,
 } from '@mysten/dapp-kit';
 import { registerEnokiWallets, type EnokiWallet } from '@mysten/enoki';
@@ -143,12 +144,13 @@ export function EnokiSignerProvider({ children }: { children: React.ReactNode })
   const { mutate: disconnectWallet } = useDisconnectWallet();
   const { mutateAsync: signPersonalMessage } = useSignPersonalMessage();
   const { mutateAsync: signTransaction } = useSignTransaction();
+  const { mutateAsync: signAndExecute } = useSignAndExecuteTransaction();
   const [googleWallet, setGoogleWallet] = useState<EnokiWallet | null>(null);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
     // Pin the OAuth redirect to the app ORIGIN (not the current page) so there is exactly ONE
-    // redirect_uri to whitelist in Google Cloud Console — avoids redirect_uri_mismatch per-page.
+    // redirect_uri to whitelist in Google Cloud Console · avoids redirect_uri_mismatch per-page.
     const redirectUrl = typeof window !== 'undefined' ? window.location.origin : undefined;
     const { wallets, unregister } = registerEnokiWallets({
       apiKey: ENOKI_API_KEY,
@@ -185,49 +187,57 @@ export function EnokiSignerProvider({ children }: { children: React.ReactNode })
     [signPersonalMessage],
   );
 
+  const fetchResult = useCallback(
+    async (digest: string): Promise<ExecResult> => {
+      await client.waitForTransaction({ digest });
+      const full = await client.getTransactionBlock({
+        digest,
+        options: { showEffects: true, showEvents: true, showObjectChanges: true },
+      });
+      return {
+        digest,
+        status: (full.effects as any)?.status?.status ?? 'unknown',
+        effects: full.effects,
+        events: (full as any).events,
+        objectChanges: (full as any).objectChanges,
+      };
+    },
+    [client],
+  );
+
   // Gas-free: server creates a sponsored tx (Enoki secret key), the wallet signs, server executes.
+  // If the sponsored seam fails, fall back to a user-paid signAndExecute so the flow never dead-ends.
   const signExecute = useCallback(
     async (tx: Transaction): Promise<ExecResult> => {
       if (!account) throw new Error('not connected');
       setBusy(true);
       try {
-        const kind = await tx.build({ client: client as any, onlyTransactionKind: true });
-        const sp = await fetch('/api/sponsor', {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ transactionKindBytes: toBase64(kind), sender: account.address }),
-        }).then((r) => r.json());
-        if (sp.error) throw new Error(sp.error);
-
-        const { signature } = await signTransaction({
-          transaction: Transaction.from(sp.bytes),
-          chain: 'sui:testnet',
-        });
-
-        const ex = await fetch('/api/sponsor/execute', {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ digest: sp.digest, signature }),
-        }).then((r) => r.json());
-        if (ex.error) throw new Error(ex.error);
-
-        await client.waitForTransaction({ digest: ex.digest });
-        const full = await client.getTransactionBlock({
-          digest: ex.digest,
-          options: { showEffects: true, showEvents: true, showObjectChanges: true },
-        });
-        return {
-          digest: ex.digest,
-          status: (full.effects as any)?.status?.status ?? 'unknown',
-          effects: full.effects,
-          events: (full as any).events,
-          objectChanges: (full as any).objectChanges,
-        };
+        try {
+          const kind = await tx.build({ client: client as any, onlyTransactionKind: true });
+          const sp = await fetch('/api/sponsor', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ transactionKindBytes: toBase64(kind), sender: account.address }),
+          }).then((r) => r.json());
+          if (sp.error) throw new Error(sp.error);
+          const { signature } = await signTransaction({ transaction: Transaction.from(sp.bytes), chain: 'sui:testnet' });
+          const ex = await fetch('/api/sponsor/execute', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ digest: sp.digest, signature }),
+          }).then((r) => r.json());
+          if (ex.error) throw new Error(ex.error);
+          return await fetchResult(ex.digest);
+        } catch (sponsorErr) {
+          console.warn('[enoki] sponsored path failed; falling back to user-paid gas:', sponsorErr);
+          const r = await signAndExecute({ transaction: tx });
+          return await fetchResult(r.digest);
+        }
       } finally {
         setBusy(false);
       }
     },
-    [account, client, signTransaction],
+    [account, client, signTransaction, signAndExecute, fetchResult],
   );
 
   const api = useMemo<SignerApi>(

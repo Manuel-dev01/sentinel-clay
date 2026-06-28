@@ -26,7 +26,7 @@ export default function MandatePage() {
   const { mandate, setMandate } = useMandate();
 
   const [step, setStep] = useState<'rules' | 'arm'>('rules');
-  const [capSui, setCapSui] = useState(10);
+  const [capSui, setCapSui] = useState(0.5);
   const [cats, setCats] = useState<number[]>([0, 1]);
   const [markets, setMarkets] = useState<string[]>([MARKETS[0].id]);
   const [expiryIdx, setExpiryIdx] = useState(1);
@@ -38,8 +38,8 @@ export default function MandatePage() {
   const plain = useMemo(() => {
     const catNames = CATEGORIES.filter((c) => cats.includes(c.id)).map((c) => c.label.toLowerCase());
     const mkt = MARKETS.filter((m) => markets.includes(m.id)).map((m) => m.label);
-    return `The agent may spend up to ${capSui} SUI/day, trading only ${catNames.join(' and ') || '—'} on ${
-      mkt.join(' and ') || '—'
+    return `The agent may spend up to ${capSui} SUI/day, trading only ${catNames.join(' and ') || '·'} on ${
+      mkt.join(' and ') || '·'
     }. This mandate expires in ${EXPIRIES[expiryIdx].label}. The agent can never hold a key.`;
   }, [capSui, cats, markets, expiryIdx]);
 
@@ -114,12 +114,14 @@ export default function MandatePage() {
               <div className="border border-hairsoft p-[22px]">
                 <div className="mb-4 flex items-baseline justify-between">
                   <div className="font-mono text-[11px] font-semibold tracking-[0.12em] text-muted">MAX PER-DAY BUDGET</div>
-                  <div className="font-sans text-[28px] font-extrabold text-gold">{capSui.toFixed(0)} SUI</div>
+                  <div className="font-sans text-[28px] font-extrabold text-gold">
+                    {capSui.toFixed(1)} SUI <span className="text-[14px] text-muted">{fmtUsd(capSui)}</span>
+                  </div>
                 </div>
-                <input type="range" min={1} max={50} step={1} value={capSui} onChange={(e) => setCapSui(+e.target.value)} className="w-full" />
+                <input type="range" min={0.1} max={5} step={0.1} value={capSui} onChange={(e) => setCapSui(+e.target.value)} className="w-full" />
                 <div className="mt-2.5 flex justify-between font-mono text-[11px] text-muted">
-                  <span>1 SUI</span>
-                  <span>{fmtUsd(capSui)} / day · 50 SUI cap</span>
+                  <span>0.1 SUI</span>
+                  <span>{capSui.toFixed(1)} SUI / day · sized to your testnet balance</span>
                 </div>
               </div>
 

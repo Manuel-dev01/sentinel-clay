@@ -14,7 +14,7 @@ export default function PolicyPage() {
           </a>
           <div className="mt-4 text-cream">
             policy::check is the single predicate both seal_approve (off-chain dry-run) and payment::pay (on-chain
-            settlement) call — so an off-chain verdict can never diverge from on-chain enforcement.
+            settlement) call · so an off-chain verdict can never diverge from on-chain enforcement.
           </div>
         </div>
       </div>

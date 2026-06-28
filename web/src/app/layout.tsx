@@ -15,7 +15,7 @@ const jetbrains = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'Sentinel — a treasury that cannot be overspent',
+  title: 'Sentinel · a treasury that cannot be overspent',
   description:
     'An agent-native, key-safe DeFi treasury on Sui. The agent proposes; a Move policy enforces your budget on every trade. The agent never holds a key.',
 };
