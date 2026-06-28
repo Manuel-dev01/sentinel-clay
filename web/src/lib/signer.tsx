@@ -147,9 +147,12 @@ export function EnokiSignerProvider({ children }: { children: React.ReactNode })
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
+    // Pin the OAuth redirect to the app ORIGIN (not the current page) so there is exactly ONE
+    // redirect_uri to whitelist in Google Cloud Console — avoids redirect_uri_mismatch per-page.
+    const redirectUrl = typeof window !== 'undefined' ? window.location.origin : undefined;
     const { wallets, unregister } = registerEnokiWallets({
       apiKey: ENOKI_API_KEY,
-      providers: { google: { clientId: GOOGLE_CLIENT_ID } },
+      providers: { google: { clientId: GOOGLE_CLIENT_ID, redirectUrl } },
       client: client as any,
       network: 'testnet',
     });
