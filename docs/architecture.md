@@ -69,10 +69,32 @@ the code. A differential test proves the two accept and reject the identical set
 
 ## The keyless agent
 
-The "Yield Hunter" agent runs server-side (`web/src/app/api/agent`) and holds **no keypair**. It reads
-live DeepBook quotes and your mandate, then emits a `PaymentIntent` proposal with a plain-English
-rationale. It can be backed by an LLM (DeepSeek) or a deterministic heuristic. Custody always stays
-with your wallet; your zkLogin session signs the settlement.
+The "Yield Hunter" agent holds **no keypair**. It reads live DeepBook quotes and your mandate, then
+emits a `PaymentIntent` proposal with a plain-English rationale. The decision logic lives once in
+`@sentinel/sdk` (`proposer.ts`) and is shared by two front doors: the on-demand API route
+(`web/src/app/api/agent`) and the autonomous worker. It can be backed by an LLM (DeepSeek) or a
+deterministic heuristic. Custody always stays with your wallet; your zkLogin session signs the
+settlement.
+
+## The autonomous agent worker
+
+So the agent genuinely *hunts* rather than waiting for a button, the [`agent/`](../agent) package is a
+standalone always-on worker (deployable to [Render](../agent/render.yaml) as a Background Worker). On
+each tick (~12s) it calls the same `proposeOnce` brain and **streams** the proposal to an
+[Upstash Redis](https://upstash.com) feed; every Nth tick it streams a *tampered* proposal (over-cap or
+replay) so the on-chain abort is always demonstrable. The `/agent` page polls a server route
+(`/api/agent/feed`, which holds the Redis token) and renders the proposals live with an "agent live"
+heartbeat - they appear with no clicks.
+
+```
+  Render worker (no key) ──LPUSH proposal + heartbeat──▶ Upstash Redis
+  web /api/agent/feed (server) ◀──read── Redis
+  /agent page ──poll ~3s──▶ /api/agent/feed ⇒ live feed; you Approve ⇒ Move enforces
+```
+
+Crucially this changes **nothing** about custody: the worker only proposes (pure data). Settlement
+still requires your signature, and `payment::pay` re-checks the mandate on-chain. The worker can be off,
+asleep, or compromised and your funds remain bounded by Move.
 
 ## The Sui stack
 
@@ -102,7 +124,9 @@ is additive and non-custodial - the enclave key signs *proposals* (data), never 
 sentinel/   Move package: mandate · policy · payment · seal_policy · execution · market_registry
             · seal_id · errors, plus vendored deepbook
 nautilus/   Move package (stretch): the enclave proposal-authorship verifier (ed25519)
-sdk/        TypeScript: AuthorizationProvider (local + Seal), PaymentClient, SealAuditLog
+sdk/        TypeScript: AuthorizationProvider (local + Seal), PaymentClient, SealAuditLog,
+            proposer (the shared keyless "Yield Hunter" brain)
+agent/      Standalone always-on worker: ticks, hunts DeepBook, streams proposals (Upstash) · no key
 web/        Next.js app: landing, wallet, mandate builder, keyless agent, settle, Walrus audit
 ```
 

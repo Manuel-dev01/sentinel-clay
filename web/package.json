@@ -15,6 +15,7 @@
     "@mysten/sui": "latest",
     "@sentinel/sdk": "workspace:*",
     "@tanstack/react-query": "latest",
+    "@upstash/redis": "latest",
     "next": "latest",
     "react": "latest",
     "react-dom": "latest"

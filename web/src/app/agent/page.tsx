@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import { Transaction } from '@mysten/sui/transactions';
@@ -23,6 +23,15 @@ interface Row {
   digest?: string;
   code?: number;
   baseOut?: string;
+  live?: boolean; // streamed by the autonomous worker (vs a manual button press)
+}
+
+interface Heartbeat {
+  ts: number;
+  tick: number;
+  status: 'live' | 'holding' | 'error';
+  source?: 'deepseek' | 'heuristic';
+  message?: string;
 }
 
 const DEEP_DP = 1e6;
@@ -42,6 +51,31 @@ export default function Dashboard() {
     refetchInterval: 6000,
     queryFn: () => readMandate(mandate!.mandateId),
   });
+
+  // The autonomous worker (Render) streams proposals to Upstash for THIS mandate; poll the feed and
+  // merge fresh ones into the proposals list so they appear with no clicks. The agent only proposes;
+  // approving still goes through the user's signer (settleProposal), and Move re-checks on settle.
+  const feedQ = useQuery<{ configured: boolean; proposals: (Proposal & { ts: number })[]; heartbeat: Heartbeat | null }>({
+    queryKey: ['agentFeed', mandate?.mandateId],
+    enabled: !!mandate,
+    refetchInterval: 3000,
+    queryFn: () => fetch(`/api/agent/feed?mandateId=${mandate!.mandateId}`).then((r) => r.json()),
+  });
+  const seenFeed = useRef<Set<string>>(new Set());
+
+  useEffect(() => {
+    const items = feedQ.data?.proposals ?? [];
+    const fresh = items.filter((it) => !seenFeed.current.has(it.id));
+    if (!fresh.length) return;
+    fresh.forEach((it) => seenFeed.current.add(it.id));
+    // feed is newest-first; reverse so the newest ends up at the top after prepending each.
+    (async () => {
+      for (const it of [...fresh].reverse()) {
+        const row = await enrich(it, mq.data);
+        setRows((rs) => [{ ...row, live: true }, ...rs].slice(0, 12));
+      }
+    })();
+  }, [feedQ.data]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!mandate) {
     return (
@@ -164,6 +198,9 @@ export default function Dashboard() {
           <Stat label="EXPIRES IN" value={`${expiresInH}h`} sub={m?.revoked ? 'revoked' : 'auto-revoke'} accent />
         </div>
 
+        {/* live autonomous feed status */}
+        <LiveFeedBanner hb={feedQ.data?.heartbeat ?? null} configured={feedQ.data?.configured} />
+
         {/* controls */}
         <div className="flex flex-wrap items-center gap-3 border border-hairsoft p-4">
           <button
@@ -171,7 +208,7 @@ export default function Dashboard() {
             disabled={thinking || busy}
             className="bg-gold px-5 py-2.5 font-sans text-[13px] font-extrabold text-ink disabled:opacity-60"
           >
-            {thinking ? 'Agent thinking…' : 'Agent: propose a trade'}
+            {thinking ? 'Agent thinking…' : 'Agent: propose now'}
           </button>
           <button
             onClick={() => propose('tamper', { kind: 'overcap' })}
@@ -198,8 +235,8 @@ export default function Dashboard() {
         <div className="font-mono text-[11px] font-semibold tracking-[0.12em] text-muted">OPEN PROPOSALS</div>
         {rows.length === 0 && (
           <div className="border border-dashed border-hairsoft p-8 text-center font-mono text-[13px] text-dim">
-            No proposals yet. Click “Agent: propose a trade” · the Yield Hunter reads DeepBook and proposes one. You approve;
-            Move enforces.
+            No proposals yet. The autonomous Yield Hunter streams them here as it ticks · or click “Agent: propose now”.
+            You approve; Move enforces.
           </div>
         )}
         {rows.map((r, i) => (
@@ -207,6 +244,32 @@ export default function Dashboard() {
         ))}
       </div>
     </AppShell>
+  );
+}
+
+function LiveFeedBanner({ hb, configured }: { hb: Heartbeat | null; configured?: boolean }) {
+  const ageS = hb ? Math.max(0, Math.round((Date.now() - hb.ts) / 1000)) : null;
+  const live = !!hb && ageS !== null && ageS < 45 && hb.status !== 'error';
+  const holding = !!hb && hb.status === 'holding';
+  const dot = !live ? 'bg-muted' : holding ? 'bg-gold' : 'bg-approve';
+  const label = !configured
+    ? 'Autonomous worker not wired · propose manually below (see docs to run the worker)'
+    : !hb
+      ? 'Waiting for the autonomous worker to tick…'
+      : hb.status === 'error'
+        ? `Agent error · ${hb.message ?? 'see worker logs'}`
+        : holding
+          ? `Agent holding · ${hb.message ?? 'budget spent'} · tick ${hb.tick}`
+          : `Agent live · hunting DeepBook autonomously · ${hb.source ?? 'agent'} · tick ${hb.tick}`;
+  return (
+    <div className="flex items-center gap-3 border border-hairsoft bg-panel p-3">
+      <span className="relative flex h-2.5 w-2.5">
+        {live && <span className={`absolute inline-flex h-full w-full animate-ping rounded-full ${dot} opacity-60`} />}
+        <span className={`relative inline-flex h-2.5 w-2.5 rounded-full ${dot}`} />
+      </span>
+      <span className="font-mono text-[12px] text-cream">{label}</span>
+      {ageS !== null && <span className="ml-auto font-mono text-[11px] text-muted">last tick {ageS}s ago</span>}
+    </div>
   );
 }
 
@@ -249,6 +312,7 @@ function ProposalCard({ row, idx, onApprove, onReject, owner }: { row: Row; idx:
         </span>
         <div className="flex-1 font-mono text-[13px] text-cream">
           SWAP {sui} SUI → {deep} DEEP <span className="text-muted">· {p.market} · {p.source}</span>
+          {row.live && <span className="text-sage"> · streamed</span>}
         </div>
         <div className={`font-mono text-[11px] font-bold ${verdictOk ? 'text-approve' : 'text-abort'}`}>policy: {verdict}</div>
       </div>

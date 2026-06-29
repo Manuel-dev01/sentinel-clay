@@ -1,0 +1,26 @@
+# Render Background Worker for the Sentinel autonomous Yield Hunter.
+# Deploy: New + > Blueprint, point at this repo. The worker holds NO key (read-only RPC + feed store).
+services:
+  - type: worker
+    name: sentinel-yield-hunter
+    runtime: node
+    plan: starter # free tier sleeps on inactivity; starter stays always-on
+    rootDir: .
+    buildCommand: corepack enable && pnpm install --frozen-lockfile=false
+    startCommand: pnpm --filter @sentinel/agent start
+    autoDeploy: true
+    envVars:
+      - key: AGENT_MANDATE_ID
+        sync: false # the demo mandate object id
+      - key: DEEPSEEK_API_KEY
+        sync: false # optional; enables varied LLM proposals
+      - key: UPSTASH_REDIS_REST_URL
+        sync: false
+      - key: UPSTASH_REDIS_REST_TOKEN
+        sync: false
+      - key: SUI_RPC_URL
+        value: https://fullnode.testnet.sui.io:443
+      - key: TICK_MS
+        value: "12000"
+      - key: ROGUE_EVERY
+        value: "6"

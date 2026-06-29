@@ -67,7 +67,25 @@ onboarding and the LLM agent.
 > settings and add your deployed URL to the Google OAuth origins and the Enoki project's allowed
 > origins. `NEXT_PUBLIC_FORCE_LOCAL=1` forces the demo wallet for local development.
 
-## 5. Walk the demo
+## 5. (Optional) run the autonomous agent
+
+The web app lets you propose on demand, but the agent can also run **24/7 on its own**. The worker in
+[`agent/`](../agent) ticks on an interval, reads the on-chain mandate + live DeepBook, asks the LLM for
+a trade within budget, and **streams proposals** to an [Upstash Redis](https://upstash.com) feed the
+`/agent` page renders live. It holds **no key** and never signs - you still approve each settle, and
+Move re-checks on-chain. See [how it works](architecture.md#the-autonomous-agent-worker).
+
+```bash
+cp agent/.env.example agent/.env       # fill AGENT_MANDATE_ID + UPSTASH_* (+ DEEPSEEK_API_KEY)
+pnpm --filter @sentinel/agent dev      # ticks every ~12s; logs each proposal
+```
+
+Set the same `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` (and `AGENT_MANDATE_ID`) in
+`web/.env.local` so the page can read the feed. The `/agent` screen then shows an "agent live" heartbeat
+and proposals appearing with **no clicks**. To deploy it always-on, push the repo to
+[Render](https://render.com) as a Background Worker - the blueprint is at [`agent/render.yaml`](../agent/render.yaml).
+
+## 6. Walk the demo
 
 1. **Wallet** - sign in with Google (zkLogin) or create a demo wallet; fund it from the faucet.
 2. **Mandate** - set the daily cap, allowed asset categories, markets, and expiry; arm it in one

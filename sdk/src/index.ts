@@ -6,3 +6,4 @@ export * from './localWitness';
 export * from './sealProvider';
 export * from './paymentClient';
 export * from './auditLog';
+export * from './proposer';

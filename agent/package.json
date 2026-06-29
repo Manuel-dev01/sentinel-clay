@@ -1,0 +1,23 @@
+{
+  "name": "@sentinel/agent",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Sentinel autonomous Yield Hunter worker. Ticks on an interval, hunts DeepBook via the shared @sentinel/sdk brain, and streams PROPOSALS to a feed (Upstash Redis). Holds NO key; the user settles.",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "start": "tsx src/index.ts",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@sentinel/sdk": "workspace:*",
+    "@mysten/sui": "latest",
+    "@upstash/redis": "latest",
+    "dotenv": "latest"
+  },
+  "devDependencies": {
+    "@types/node": "latest",
+    "tsx": "latest",
+    "typescript": "latest"
+  }
+}

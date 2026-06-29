@@ -54,11 +54,12 @@ with the recipient binding); an earlier mainnet deploy proved the compliant sett
 ## Architecture
 
 ```
-  Browser (your custody)                    Server (keyless)              Sui testnet
+  Browser (your custody)                    Keyless agent                 Sui testnet
   ┌─────────────────────────┐      propose   ┌──────────────────┐
-  │ zkLogin / demo wallet    │ ◄───────────── │ /api/agent       │  reads DeepBook + mandate
-  │  · witness seed (local)  │   PaymentIntent│  DeepSeek "Yield  │  (no keypair, only proposes)
-  │  · approve → sign        │                │  Hunter" + fallbk │
+  │ zkLogin / demo wallet    │ ◄───────────── │ Yield Hunter brain│  reads DeepBook + mandate
+  │  · witness seed (local)  │   PaymentIntent│  (sdk/proposer)   │  (no keypair, only proposes)
+  │  · approve → sign        │   via Upstash  │  · /api/agent     │
+  │                          │     feed       │  · Render worker  │  ticks 24/7, streams proposals
   └───────────┬─────────────┘                └──────────────────┘
               │ pay_real (Enoki-sponsored gas)
               ▼
@@ -81,7 +82,7 @@ with the recipient binding); an earlier mainnet deploy proved the compliant sett
 | **DeepBook v3** | On-chain trade execution venue; the agent reads live mid/quote via dev-inspect |
 | **Walrus** | Immutable audit log - every proposal+verdict is a Seal-encrypted blob (testnet publisher/aggregator). _live in app_ |
 | **zkLogin + Enoki sponsored tx** | Google login, no seed phrase, gas sponsored - judge needs no wallet/SUI. _live in app (dapp-kit + @mysten/enoki)_ |
-| **DeepSeek agent** | The keyless "Yield Hunter" runs server-side (`/api/agent`), proposes trades with plain-English rationale; never holds a key |
+| **DeepSeek agent** | The keyless "Yield Hunter" (shared brain in `sdk/proposer`) proposes trades with plain-English rationale; never holds a key. Runs on demand (`/api/agent`) and as an autonomous 24/7 worker (`agent/`, deployable to Render) that streams proposals to an Upstash feed the app renders live |
 | **Nautilus** *(stretch)* | Agent strategy in a TEE so proposals are provably from the attested binary; on-chain ed25519 verifier module shipped + tested (`nautilus/`), live AWS Nitro deploy is the last mile. See [how it works](docs/architecture.md#nautilus-provable-agent-strategy) |
 
 ## Move highlights (for reviewers)
@@ -126,7 +127,9 @@ live abort/replay tx digests are in [DEPLOYMENTS.md](DEPLOYMENTS.md).
 ```
 sentinel/   Move package (mandate · policy · payment · seal_policy · execution) + vendored deepbook
 nautilus/   Move package (stretch): enclave attestation/authorship verifier (ed25519) + tests
-sdk/        TypeScript: AuthorizationProvider (LocalWitness + Seal), PaymentClient, SealAuditLog
+sdk/        TypeScript: AuthorizationProvider (LocalWitness + Seal), PaymentClient, SealAuditLog,
+            proposer (shared keyless Yield Hunter brain)
+agent/      Standalone always-on worker: ticks, hunts DeepBook, streams proposals (Upstash) - no key
 web/        Next.js app - landing, mandate builder, keyless agent, settle, Walrus audit
 ```
 
@@ -151,6 +154,7 @@ switch on Google/zkLogin onboarding and the DeepSeek agent.
 | `NEXT_PUBLIC_ENOKI_API_KEY` / `ENOKI_SECRET_KEY` | zkLogin + sponsored gas | [portal.enoki.mystenlabs.com](https://portal.enoki.mystenlabs.com) |
 | `NEXT_PUBLIC_GOOGLE_CLIENT_ID` | Google OAuth (register it in Enoki too) | [console.cloud.google.com](https://console.cloud.google.com) |
 | `DEEPSEEK_API_KEY` | the Yield Hunter agent (server-only) | [platform.deepseek.com](https://platform.deepseek.com) |
+| `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN` | autonomous agent proposal feed (server-only); `agent/` writes, app reads | [upstash.com](https://upstash.com) |
 | `NEXT_PUBLIC_SENTINEL_PKG`, `NEXT_PUBLIC_APP_REGISTRY` | on-chain ids (defaults shipped) | - |
 
 > **Deploying to Vercel:** set these in **Project → Settings → Environment Variables** (`.env.local`

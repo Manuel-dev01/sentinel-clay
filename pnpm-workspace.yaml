@@ -1,11 +1,14 @@
 packages:
   - sdk
   - web
+  - agent
 
 allowBuilds:
   esbuild: set this to true or false
   sharp: set this to true or false
 
+# Approve native build scripts for these deps (esbuild powers tsx/Next; sharp powers image opt) so
+# `pnpm install` doesn't error on "ignored build scripts".
 onlyBuiltDependencies:
   - esbuild
   - sharp
