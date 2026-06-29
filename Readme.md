@@ -39,9 +39,9 @@ You fund a self-custodial **mandate wallet** and set human-readable rules - *max
 
 Real testnet transactions (committed, explorer-visible): **real DeepBook fill** `5SMBQo8B…`
 (0.5 SUI → 20 DEEP); `seal_approve` compliant `3mVozzJP…`; over-cap abort `E_OVER_CAP` `DcUUFG8b…`;
-`E_REPLAY` `3aNnknYg…`. The **same policy is also proven on Sui mainnet** (package `0xd37ca38e…`):
-compliant `seal_approve` `2z8CxQ6C…`, over-cap `E_OVER_CAP` `6JWnSZKX…`. Full transcript in
-[DEPLOYMENTS.md](DEPLOYMENTS.md).
+`E_REPLAY` `3aNnknYg…`. The **same policy is also published on Sui mainnet** (current `0x71ca3a5c…`,
+with the recipient binding); an earlier mainnet deploy proved the compliant settle + over-cap abort
+(`2z8CxQ6C…` / `6JWnSZKX…`). Full transcript in [DEPLOYMENTS.md](DEPLOYMENTS.md).
 
 ▶️ **Demo:** open the [live app](https://sentinel-clay-web.vercel.app/) and follow the [demo path](#demo-path) below.
 
@@ -115,7 +115,8 @@ Run: `sui move test`
 | **Testnet package** (current - H1 recipient binding) | `0x98164c30fe76cbfec0f822083d1a4e37ffba49af9c2257e3b9d3f2f04b74a7f1` | 2026-06-29 |
 | App market registry (shared, DEEP_SUI allowlisted) | `0x0bdb186a4f3bc18b6a54689c437f57cd4d481694b64daf60d2d871f77858468f` | 2026-06-29 |
 | **Live app** | https://sentinel-clay-web.vercel.app/ | 2026-06-27 |
-| Mainnet package (provenance; predates H1, redeploy pending) | `0xd37ca38e54a3218bbdf7417b9817d0075ebd56ed65584a382af87854e2605066` | 2026-06-28 |
+| **Mainnet package** (current - H1 recipient binding) | `0x71ca3a5ca48174b91c215e30e42d4ca019da1a85e15e0b74a59979f6a8e2dc5b` | 2026-06-29 |
+| Mainnet package (prior - pre-H1; over-cap/seal proofs) | `0xd37ca38e54a3218bbdf7417b9817d0075ebd56ed65584a382af87854e2605066` | 2026-06-28 |
 | Testnet package (prior - Seal adapter) | `0x7a7ee7186ccb69b2b250e7b08fc31b8ccfadae9a7596a352112f7aa3e72a77f9` | 2026-06-26 |
 
 Fresh Package ID per checkpoint during development; full history + runtime object IDs and the
