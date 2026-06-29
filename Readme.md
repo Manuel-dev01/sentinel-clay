@@ -10,20 +10,8 @@
 
 </div>
 
-> **Build status (2026-06-28):** Stages 0–6 complete.
->
-> - **On mainnet:** the Move package is published on Sui mainnet (`0xd37ca38e…`), same source as
->   testnet, where a compliant `seal_approve` settles and an over-cap one **aborts `E_OVER_CAP`**
->   on-chain (`6JWnSZKX…`).
-> - **Live app** ([sentinel-clay-web.vercel.app](https://sentinel-clay-web.vercel.app/)), over the
->   testnet package: Google login (zkLogin via Enoki) with sponsored gas, a mandate builder that arms
->   an on-chain policy in one signature, a **keyless AI agent** (DeepSeek "Yield Hunter") that reads
->   DeepBook + the mandate and only *proposes* trades, an approve→`pay_real` settle path, and a
->   **Walrus** audit trail of every proposal and verdict.
-> - **Proven on-chain:** a compliant trade **fills on real DeepBook v3** (0.5 SUI → **20 DEEP**,
->   `5SMBQo8B…`); over-cap and replayed trades **abort** (`E_OVER_CAP` `DcUUFG8b…`, `E_REPLAY`
->   `3aNnknYg…`). **42 tests pass** (32 sentinel + 4 nautilus Move, 6 SDK).
-> - **The agent holds no key** - it only proposes; the user's zkLogin session signs; Move enforces.
+> **Live on Sui mainnet and testnet,** with a hosted [web app](https://sentinel-clay-web.vercel.app/)
+> you can try using a Google login - no wallet, no SUI required. **42 tests pass** (32 + 4 Move, 6 SDK).
 
 ---
 
@@ -55,7 +43,13 @@ Real testnet transactions (committed, explorer-visible): **real DeepBook fill** 
 compliant `seal_approve` `2z8CxQ6C…`, over-cap `E_OVER_CAP` `6JWnSZKX…`. Full transcript in
 [DEPLOYMENTS.md](DEPLOYMENTS.md).
 
-▶️ **Demo:** run [DEMO_CHECKLIST.md](DEMO_CHECKLIST.md) against the [live app](https://sentinel-clay-web.vercel.app/).
+▶️ **Demo:** open the [live app](https://sentinel-clay-web.vercel.app/) and follow the [demo path](#demo-path) below.
+
+## Documentation
+- **[Getting started](docs/getting-started.md)** - clone from GitHub, build, test, run the app, walk the demo.
+- **[How it works](docs/architecture.md)** - the mandate, the payment flow, the one-shot witness, the Sui stack.
+- **[SDK integration](docs/sdk.md)** - authorize and settle trades from your own agent with `@sentinel/sdk`.
+- **[Contributing](CONTRIBUTING.md)** - the GitHub flow and the checks to run.
 
 ## Architecture
 
@@ -88,7 +82,7 @@ compliant `seal_approve` `2z8CxQ6C…`, over-cap `E_OVER_CAP` `6JWnSZKX…`. Ful
 | **Walrus** | Immutable audit log - every proposal+verdict is a Seal-encrypted blob (testnet publisher/aggregator). _live in app_ |
 | **zkLogin + Enoki sponsored tx** | Google login, no seed phrase, gas sponsored - judge needs no wallet/SUI. _live in app (dapp-kit + @mysten/enoki)_ |
 | **DeepSeek agent** | The keyless "Yield Hunter" runs server-side (`/api/agent`), proposes trades with plain-English rationale; never holds a key |
-| **Nautilus** *(stretch)* | Agent strategy in a TEE so proposals are provably from the attested binary; on-chain ed25519 verifier module shipped + tested (`nautilus/`), live AWS Nitro deploy is the documented last mile. See [NAUTILUS.md](NAUTILUS.md) |
+| **Nautilus** *(stretch)* | Agent strategy in a TEE so proposals are provably from the attested binary; on-chain ed25519 verifier module shipped + tested (`nautilus/`), live AWS Nitro deploy is the last mile. See [how it works](docs/architecture.md#nautilus-provable-agent-strategy) |
 
 ## Move highlights (for reviewers)
 
@@ -167,7 +161,9 @@ trade-SUI → agent **proposes** a DeepBook trade → **Approve** → settles + 
 over-cap → aborts `E_OVER_CAP` → **replay** → aborts `E_REPLAY` → **Activity** shows the Walrus audit trail.
 
 ## What's next
-Live AWS Nitro enclave deploy (the on-chain verifier + mock path already ship, see [NAUTILUS.md](NAUTILUS.md)) · multi-asset mandate vault (Model B) · Walrus Site + SuiNS.
+- **Live AWS Nitro enclave** for the agent strategy - the on-chain ed25519 verifier and the mock-attestation path already ship (see [how it works](docs/architecture.md#nautilus-provable-agent-strategy)); the remaining step is the hardware attestation itself.
+- **Multi-asset mandate vault** (Model B) - hold and trade several assets under one mandate.
+- **Walrus Site + SuiNS** - host the frontend fully on-chain under a Sui name.
 
 ## Built for
 The **CLAY Hackathon** (Code Like A Yeti) on Sui, by Emmanuel Olamiye.
