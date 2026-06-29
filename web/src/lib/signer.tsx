@@ -46,8 +46,17 @@ export function useSigner(): SignerApi {
 }
 
 async function faucetTo(addr: string) {
-  const { requestSuiFromFaucetV2, getFaucetHost } = await import('@mysten/sui/faucet');
-  await requestSuiFromFaucetV2({ host: getFaucetHost('testnet'), recipient: addr });
+  // Proxied through /api/faucet (server-side) so the browser CORS block / silent failure is gone and
+  // a rate-limit or error surfaces to the caller.
+  const res = await fetch('/api/faucet', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ address: addr }),
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.error || `Faucet request failed (${res.status}).`);
+  }
 }
 
 // ───────────────────────────── Local demo signer (browser keypair) ─────────────────────────────

@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { AppShell } from '@/components/AppShell';
 import { useSigner } from '@/lib/signer';
 import { suiClient } from '@/lib/suiClient';
@@ -54,6 +54,8 @@ export default function WalletPage() {
   const { data, isFetching } = useBalances(address);
   const sui = data ? suiFromMist(data.sui) : 0;
   const [copied, setCopied] = useState(false);
+  const [faucetMsg, setFaucetMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const qc = useQueryClient();
 
   async function onCopy() {
     if (!address) return;
@@ -61,6 +63,21 @@ export default function WalletPage() {
     if (ok) {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
+    }
+  }
+
+  async function onFaucet() {
+    setFaucetMsg(null);
+    try {
+      await faucet();
+      setFaucetMsg({ ok: true, text: 'Requested. Balance updates in a few seconds.' });
+      // Funds land asynchronously; nudge the balance query a few times instead of waiting for the poll.
+      const refetch = () => qc.invalidateQueries({ queryKey: ['balances', address] });
+      refetch();
+      setTimeout(refetch, 2500);
+      setTimeout(refetch, 6000);
+    } catch (e) {
+      setFaucetMsg({ ok: false, text: e instanceof Error ? e.message : 'Faucet request failed.' });
     }
   }
 
@@ -126,11 +143,16 @@ export default function WalletPage() {
               </div>
               <button
                 disabled={busy}
-                onClick={faucet}
+                onClick={onFaucet}
                 className="mb-3 w-full bg-gold py-4 font-sans text-sm font-extrabold text-ink disabled:opacity-60"
               >
                 {busy ? 'Requesting…' : 'Get testnet SUI'}
               </button>
+              {faucetMsg && (
+                <div className={`mb-3 font-mono text-[11px] leading-relaxed ${faucetMsg.ok ? 'text-approve' : 'text-abort'}`}>
+                  {faucetMsg.text}
+                </div>
+              )}
               <Link href="/mandate" className="w-full border border-hair py-3.5 text-center font-mono text-[13px] font-bold text-cream">
                 Next: define the mandate →
               </Link>
