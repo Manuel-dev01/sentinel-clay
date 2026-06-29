@@ -57,6 +57,10 @@ public fun evaluate(
 ): u64 {
     // mandate must be bound to THIS registry (defends against a swapped allowlist)
     if (mandate::registry_id(m) != market_registry::id(registry)) return errors::market();
+    // proceeds must return to the mandate owner - so a leaked one-shot witness can never redirect a
+    // policy-passing trade to an attacker-chosen recipient (the witness/pay path binds amount+pool+
+    // nonce; this binds the destination).
+    if (intent.recipient != mandate::owner(m)) return errors::recipient();
     // per-intent deadline
     if (clock.timestamp_ms() > intent.expiry_ms) return errors::expired();
     // asset category must be allowed

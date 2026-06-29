@@ -29,7 +29,7 @@ Before opening a PR, make sure these pass:
 
 ```bash
 # Move - the policy core and the stretch verifier
-cd sentinel && sui move build && sui move test      # 32 passed
+cd sentinel && sui move build && sui move test      # 34 passed
 cd ../nautilus && sui move test                      # 4 passed
 cd ..
 

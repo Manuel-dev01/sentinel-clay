@@ -42,12 +42,25 @@ function Nav() {
           <Sigil size={26} />
           <div className="font-sans text-lg font-extrabold tracking-tight text-cream">SENTINEL</div>
         </div>
-        <div className="flex items-center gap-5 sm:gap-8">
+        <div className="flex items-center gap-4 sm:gap-8">
           <div className="hidden items-center gap-8 sm:flex">
             <a href="#path" className="font-sans text-sm font-medium text-[#cfd8ce] transition-colors hover:text-cream">Product</a>
             <a href="#sim" className="font-sans text-sm font-medium text-[#cfd8ce] transition-colors hover:text-cream">Policy</a>
             <a href={GITHUB} target="_blank" rel="noreferrer" className="font-sans text-sm font-medium text-[#cfd8ce] transition-colors hover:text-cream">Docs</a>
           </div>
+          {/* mobile menu (CSS-only disclosure) */}
+          <details className="relative sm:hidden">
+            <summary className="flex cursor-pointer list-none flex-col gap-[5px] p-1.5 [&::-webkit-details-marker]:hidden" aria-label="Menu">
+              <span className="block h-0.5 w-5 bg-cream" />
+              <span className="block h-0.5 w-5 bg-cream" />
+              <span className="block h-0.5 w-5 bg-cream" />
+            </summary>
+            <div className="absolute right-0 z-50 mt-3 flex w-44 flex-col gap-3 border border-hair bg-forest p-4 font-sans text-sm font-medium text-[#cfd8ce]">
+              <a href="#path" className="transition-colors hover:text-cream">Product</a>
+              <a href="#sim" className="transition-colors hover:text-cream">Policy</a>
+              <a href={GITHUB} target="_blank" rel="noreferrer" className="transition-colors hover:text-cream">Docs</a>
+            </div>
+          </details>
           <Link href="/wallet" className="bg-gold px-[18px] py-[11px] font-sans text-[13px] font-bold text-ink transition-opacity hover:opacity-90">
             Launch app
           </Link>

@@ -9,7 +9,6 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "latest",
     "@mysten/dapp-kit": "latest",
     "@mysten/enoki": "latest",
     "@mysten/seal": "latest",

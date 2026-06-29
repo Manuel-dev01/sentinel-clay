@@ -8,8 +8,8 @@
 /// authorship attestation, not a spending authority.
 ///
 /// Kept in a SEPARATE package from `sentinel` so the audited core is never destabilized by a stretch
-/// (CLAUDE.md Decision #1 / Stage 6). See NAUTILUS.md for the full architecture and the live-deploy
-/// last mile (on-chain CBOR/COSE Nitro attestation parsing). This module ships the genuinely
+/// (CLAUDE.md Decision #1 / Stage 6). See docs/architecture.md (Nautilus section) for the full
+/// architecture and the live-deploy last mile (on-chain CBOR/COSE Nitro attestation parsing). This module ships the genuinely
 /// verifiable machinery: register an enclave key (dev/unattested for the mock path) and verify that
 /// a proposal payload was signed by it, using Sui's native ed25519.
 module sentinel_nautilus::enclave;

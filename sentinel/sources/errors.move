@@ -18,6 +18,7 @@ const E_NOT_OWNER: u64 = 9; // caller is not the mandate owner / registry admin
 const E_AMOUNT: u64 = 10; // intent.amount != the coin actually supplied to execute
 const E_SLIPPAGE: u64 = 11; // fill below min_base_out (slippage / insufficient reserve)
 const E_BAD_ID: u64 = 12; // Seal identity bytes malformed (too short to decode mandate||nonce)
+const E_RECIPIENT: u64 = 13; // intent recipient is not the mandate owner (a leaked witness cannot redirect funds)
 
 public fun over_cap(): u64 { E_OVER_CAP }
 public fun category(): u64 { E_CATEGORY }
@@ -31,3 +32,4 @@ public fun not_owner(): u64 { E_NOT_OWNER }
 public fun amount(): u64 { E_AMOUNT }
 public fun slippage(): u64 { E_SLIPPAGE }
 public fun bad_id(): u64 { E_BAD_ID }
+public fun recipient(): u64 { E_RECIPIENT }

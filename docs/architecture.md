@@ -56,7 +56,9 @@ on-chain for anyone to verify.
 Authorization is a **`Witness`** resource with no `copy`, no `drop`, and no `store`. Move's type
 system enforces, at compile time, that it cannot be duplicated, silently discarded, or stashed for
 later. `payment::pay` checks that the witness matches the mandate's current commitment and nonce, then
-**rotates** both in the same call. A used authorization can never validate again, so a replayed
+**rotates** both in the same call. The trade's destination is bound too: `policy::check` requires the
+recipient to be the mandate owner, so even a leaked witness cannot redirect proceeds to an attacker.
+A used authorization can never validate again, so a replayed
 trade aborts with `E_REPLAY`.
 
 ## The shared predicate (off-chain can't diverge from on-chain)

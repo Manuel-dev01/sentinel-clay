@@ -3,7 +3,7 @@
 
 export const PACKAGE_ID =
   process.env.NEXT_PUBLIC_SENTINEL_PKG ??
-  '0x7a7ee7186ccb69b2b250e7b08fc31b8ccfadae9a7596a352112f7aa3e72a77f9';
+  '0x98164c30fe76cbfec0f822083d1a4e37ffba49af9c2257e3b9d3f2f04b74a7f1';
 
 export const NETWORK = 'testnet';
 export const FULLNODE = 'https://fullnode.testnet.sui.io:443';
@@ -29,7 +29,7 @@ export const CLOCK_ID = '0x00000000000000000000000000000000000000000000000000000
 
 // One app-wide shared registry (admin-curated markets) → arming is a single `new_mandate` tx ("sign once").
 export const APP_REGISTRY_ID =
-  process.env.NEXT_PUBLIC_APP_REGISTRY ?? '0x8b49d0d7afde529a8784f3f255b1fa2168519988aae242f5bf3a881b6a7f7c1f';
+  process.env.NEXT_PUBLIC_APP_REGISTRY ?? '0x0bdb186a4f3bc18b6a54689c437f57cd4d481694b64daf60d2d871f77858468f';
 
 export const CATEGORIES = [
   { id: 0, label: 'Stablecoins', key: 'stable' },

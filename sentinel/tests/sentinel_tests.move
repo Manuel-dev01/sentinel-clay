@@ -75,12 +75,13 @@ fun finish(sc: Scenario, reg: MarketRegistry, m: Mandate, clock: Clock) {
 
 #[test_only]
 fun mk_intent(m: &Mandate, pool: ID, cat: u8, amount: u64, nonce: u64, expiry: u64): PaymentIntent {
-    policy::new_intent(mandate::id(m), pool, cat, amount, RECIP, nonce, expiry)
+    // proceeds return to the mandate owner (policy::check now binds recipient == owner)
+    policy::new_intent(mandate::id(m), pool, cat, amount, mandate::owner(m), nonce, expiry)
 }
 
 /// Drive the Seal witness-release predicate for an intent exactly as a key-server dry-run
 /// would: id = encode(mandate_id, nonce), the intent passed field-wise. Aborts identically to
-/// `payment::pay` (both route through `policy::check`) — this is the §7-5 differential.
+/// `payment::pay` (both route through `policy::check`) - this is the §7-5 differential.
 #[test_only]
 fun seal_check_intent(m: &Mandate, reg: &MarketRegistry, it: &PaymentIntent, clock: &Clock) {
     let id = seal_id::encode(policy::mandate_id(it), policy::nonce(it));
@@ -170,6 +171,15 @@ fun evaluate_bad_nonce() {
     finish(sc, reg, m, clock);
 }
 
+#[test]
+fun evaluate_wrong_recipient() {
+    let (sc, reg, m, clock) = start(1_000_000);
+    // recipient = RECIP (@0xCAFE), not the mandate owner -> a leaked witness cannot redirect funds
+    let it = policy::new_intent(mandate::id(&m), pool_ok(), CAT_STABLE, 10, RECIP, mandate::nonce(&m), EXPIRY);
+    assert!(policy::evaluate(&m, &reg, &it, &clock) == errors::recipient(), 0);
+    finish(sc, reg, m, clock);
+}
+
 // --- abort-path proofs via authorize (the law) ---
 
 #[test]
@@ -186,6 +196,15 @@ fun authorize_over_cap_aborts() {
 fun authorize_wrong_market_aborts() {
     let (sc, reg, mut m, clock) = start(1_000_000);
     let it = mk_intent(&m, pool_bad(), CAT_STABLE, 10, mandate::nonce(&m), EXPIRY);
+    payment::authorize(&mut m, &reg, &it, valid_witness(0), commitment(1), &clock);
+    finish(sc, reg, m, clock);
+}
+
+#[test]
+#[expected_failure(abort_code = 13, location = sentinel::policy)] // E_RECIPIENT
+fun authorize_wrong_recipient_aborts() {
+    let (sc, reg, mut m, clock) = start(1_000_000);
+    let it = policy::new_intent(mandate::id(&m), pool_ok(), CAT_STABLE, 10, RECIP, mandate::nonce(&m), EXPIRY);
     payment::authorize(&mut m, &reg, &it, valid_witness(0), commitment(1), &clock);
     finish(sc, reg, m, clock);
 }
@@ -375,7 +394,7 @@ fun differential_compliant_seal_and_authorize_agree() {
 }
 
 /// Differential on the rogue path: an over-cap intent makes the Seal release predicate ABORT
-/// with the SAME code/location as `payment::pay` — so the key servers deny the secret off-chain
+/// with the SAME code/location as `payment::pay` - so the key servers deny the secret off-chain
 /// for exactly what Move would abort on-chain.
 #[test]
 #[expected_failure(abort_code = 1, location = sentinel::policy)] // E_OVER_CAP
@@ -430,7 +449,7 @@ fun seal_check_wrong_nonce_aborts() {
 // --- Stage 3: MockPool venue execution (real, mock-priced fills) ---
 
 /// Create a funded MockPool<BASE,QUOTE> and allowlist its real id in the registry, returning
-/// the pool + its id (which the intent's pool_id must match — the pool-id binding).
+/// the pool + its id (which the intent's pool_id must match - the pool-id binding).
 #[test_only]
 fun mk_pool_allowed(
     sc: &mut Scenario,
@@ -462,8 +481,8 @@ fun mock_fill_settles_and_delivers_base() {
     assert!(mandate::nonce(&m) == 1, 1);
     assert!(execution::base_reserve(&pool) == 1_000_000 - 80, 2);
     assert!(execution::quote_reserve(&pool) == 40, 3);
-    ts::next_tx(&mut sc, RECIP);
-    let got = ts::take_from_address<Coin<BASE>>(&sc, RECIP);
+    ts::next_tx(&mut sc, ADMIN); // base_out is delivered to the mandate owner (recipient == owner)
+    let got = ts::take_from_address<Coin<BASE>>(&sc, ADMIN);
     assert!(coin::value(&got) == 80, 4);
     coin::burn_for_testing(got);
     execution::destroy_for_testing(pool);

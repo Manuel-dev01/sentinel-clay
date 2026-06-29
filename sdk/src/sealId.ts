@@ -2,7 +2,7 @@ import { bcs } from '@mysten/sui/bcs';
 import { fromHex, toHex } from '@mysten/sui/utils';
 
 /**
- * Seal identity codec — the exact mirror of the Move `sentinel::seal_id` module.
+ * Seal identity codec - the exact mirror of the Move `sentinel::seal_id` module.
  *
  *   inner id = id_to_bytes(mandateId)  (32 bytes)  ||  bcs(nonce: u64)  (8 bytes, little-endian)
  *
@@ -19,7 +19,7 @@ export function encodeSealId(mandateId: string, nonce: bigint | number): Uint8Ar
   return out;
 }
 
-/** Hex string (no `0x`) of the inner id — what `@mysten/seal` expects for `encrypt`/`fetchKeys`. */
+/** Hex string (no `0x`) of the inner id - what `@mysten/seal` expects for `encrypt`/`fetchKeys`. */
 export function encodeSealIdHex(mandateId: string, nonce: bigint | number): string {
   return toHex(encodeSealId(mandateId, nonce));
 }

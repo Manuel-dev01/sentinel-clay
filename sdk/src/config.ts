@@ -26,7 +26,7 @@ export const CLOCK_ID = '0x00000000000000000000000000000000000000000000000000000
 /**
  * Seal testnet key-server object ids. `getAllowlistedKeyServers` was removed from `@mysten/seal`
  * (≥1.2), so these are supplied directly (override with SEAL_KEY_SERVERS=comma,separated). If they
- * are wrong/unreachable the SealMpcProvider degrades to LocalWitnessProvider — on-chain enforcement
+ * are wrong/unreachable the SealMpcProvider degrades to LocalWitnessProvider - on-chain enforcement
  * never depends on the committee (locked Decision #1).
  */
 export const SEAL_TESTNET_KEY_SERVERS: string[] = (process.env.SEAL_KEY_SERVERS

@@ -4,11 +4,11 @@ import { DEFAULT_SEED } from './config';
 import type { AuthorizationProvider, PaymentIntentFields, WitnessMaterial } from './provider';
 
 /**
- * Deterministic, always-available provider — the demo guarantee. A user-held `seed` derives every
+ * Deterministic, always-available provider - the demo guarantee. A user-held `seed` derives every
  * one-shot preimage; `keccak256(preimage_n)` is the on-chain commitment for nonce n. Reproduces
  * `payment::commitment_of` exactly, so witnesses it mints always verify on-chain.
  *
- * It does NOT itself enforce policy — it trusts its caller and the on-chain `payment::pay` is the
+ * It does NOT itself enforce policy - it trusts its caller and the on-chain `payment::pay` is the
  * law. (SealMpcProvider adds the off-chain policy gate on top of these same preimages.)
  */
 export class LocalWitnessProvider implements AuthorizationProvider {

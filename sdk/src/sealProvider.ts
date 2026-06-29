@@ -30,7 +30,7 @@ export interface SealProviderOptions {
  * Seal adapter (Model B): the user pre-encrypts each one-shot witness preimage under
  * `id = mandate_id || nonce`, gated by `seal_policy::seal_approve` (which routes through the SAME
  * `policy::check` as `payment::pay`). The agent can only obtain preimage_n by passing the key-server
- * DRY-RUN of seal_approve with its actual intent — so a rogue/over-cap intent is denied the secret
+ * DRY-RUN of seal_approve with its actual intent - so a rogue/over-cap intent is denied the secret
  * off-chain (and would re-abort on-chain). Seal gates the SECRET; Move stays the LAW.
  *
  * Key servers unreachable (not a policy denial) ⇒ fall back to LocalWitnessProvider; on-chain

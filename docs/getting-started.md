@@ -27,7 +27,7 @@ builds and links against live testnet DeepBook with no `--allow-dirty` and no ca
 ```bash
 cd sentinel
 sui move build
-sui move test          # 32 passed - policy, witness rotation, invariants, fuzz, differential
+sui move test          # 34 passed - policy, recipient binding, witness rotation, invariants, fuzz, differential
 cd ..
 ```
 

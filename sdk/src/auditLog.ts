@@ -19,7 +19,7 @@ const bigintReplacer = (_k: string, v: unknown) => (typeof v === 'bigint' ? v.to
 
 /**
  * Confidential audit log + agent memory (the "Both" half). Each proposal+verdict record is encrypted
- * under Seal `id = mandate_id || seq`, gated by `seal_policy::seal_approve_owner` — only the mandate
+ * under Seal `id = mandate_id || seq`, gated by `seal_policy::seal_approve_owner` - only the mandate
  * OWNER can decrypt. The ciphertext is what would be written to Walrus (Stage 5); here we produce it
  * and prove the owner-only decrypt roundtrip.
  */

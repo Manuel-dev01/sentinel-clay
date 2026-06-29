@@ -11,7 +11,7 @@
 </div>
 
 > **Live on Sui mainnet and testnet,** with a hosted [web app](https://sentinel-clay-web.vercel.app/)
-> you can try using a Google login - no wallet, no SUI required. **42 tests pass** (32 + 4 Move, 6 SDK).
+> you can try using a Google login - no wallet, no SUI required. **44 tests pass** (34 + 4 Move, 6 SDK).
 
 ---
 
@@ -92,7 +92,7 @@ compliant `seal_approve` `2z8CxQ6C…`, over-cap `E_OVER_CAP` `6JWnSZKX…`. Ful
 
 ## Security
 
-**`sui move test` → 32 passed, 0 failed** (sentinel) · **4 passed** (`nautilus/` enclave verifier, ed25519 vs RFC 8032) · **`pnpm test` (sdk) → 6 passed** (keccak↔Move parity, `seal_id` codec).
+**`sui move test` → 34 passed, 0 failed** (sentinel) · **4 passed** (`nautilus/` enclave verifier, ed25519 vs RFC 8032) · **`pnpm test` (sdk) → 6 passed** (keccak↔Move parity, `seal_id` codec).
 
 | Property | Test | Status |
 |----------|------|--------|
@@ -100,10 +100,11 @@ compliant `seal_approve` `2z8CxQ6C…`, over-cap `E_OVER_CAP` `6JWnSZKX…`. Ful
 | A consumed witness never re-validates (replay) | `replayed_witness_aborts` → `E_REPLAY` | ✅ |
 | `nonce` strictly monotonic + commitment rotates | `invariant_nonce_monotonic_and_rotates` | ✅ |
 | Forged witness rejected | `forged_witness_aborts` → `E_BAD_WITNESS` | ✅ |
-| Revoked/expired mandate settles nothing | `pay_on_revoked_mandate_aborts` | ✅ |
-| `seal_approve` ⇔ `payment::pay` share one check | `differential_compliant_seal_and_pay_agree` | ✅ |
+| Revoked/expired mandate settles nothing | `authorize_on_revoked_mandate_aborts` | ✅ |
+| `seal_approve` ⇔ `payment::pay` share one check | `differential_compliant_seal_and_authorize_agree` | ✅ |
 | No compliant-rejection / no violating-acceptance | `fuzz_evaluate_matches_spec` (400 random intents) | ✅ |
-| Every abort code (`E_OVER_CAP`…`E_NOT_OWNER`) | dedicated unit tests | ✅ |
+| Proceeds can't be redirected (recipient bound to owner) | `authorize_wrong_recipient_aborts` → `E_RECIPIENT` | ✅ |
+| Every abort code (`E_OVER_CAP`…`E_RECIPIENT`) | dedicated unit tests | ✅ |
 
 Run: `sui move test`
 
@@ -111,11 +112,11 @@ Run: `sui move test`
 
 | What | ID / URL | Date |
 |------|----------|------|
-| **Mainnet package** (same source; compliant `seal_approve` + over-cap `E_OVER_CAP` proven on mainnet) | `0xd37ca38e54a3218bbdf7417b9817d0075ebd56ed65584a382af87854e2605066` | 2026-06-28 |
+| **Testnet package** (current - H1 recipient binding) | `0x98164c30fe76cbfec0f822083d1a4e37ffba49af9c2257e3b9d3f2f04b74a7f1` | 2026-06-29 |
+| App market registry (shared, DEEP_SUI allowlisted) | `0x0bdb186a4f3bc18b6a54689c437f57cd4d481694b64daf60d2d871f77858468f` | 2026-06-29 |
 | **Live app** | https://sentinel-clay-web.vercel.app/ | 2026-06-27 |
-| Testnet package (current - Seal adapter, vendored clean build) | `0x7a7ee7186ccb69b2b250e7b08fc31b8ccfadae9a7596a352112f7aa3e72a77f9` | 2026-06-26 |
-| App market registry (shared, DEEP_SUI allowlisted) | `0x8b49d0d7afde529a8784f3f255b1fa2168519988aae242f5bf3a881b6a7f7c1f` | 2026-06-27 |
-| Testnet package (Stage 3.1 - real DeepBook fill) | `0xd3dc1607b52c49864e7298846dd0440ae8f49e3cc130babacc267697718d9a2e` | 2026-06-26 |
+| Mainnet package (provenance; predates H1, redeploy pending) | `0xd37ca38e54a3218bbdf7417b9817d0075ebd56ed65584a382af87854e2605066` | 2026-06-28 |
+| Testnet package (prior - Seal adapter) | `0x7a7ee7186ccb69b2b250e7b08fc31b8ccfadae9a7596a352112f7aa3e72a77f9` | 2026-06-26 |
 
 Fresh Package ID per checkpoint during development; full history + runtime object IDs and the
 live abort/replay tx digests are in [DEPLOYMENTS.md](DEPLOYMENTS.md).
@@ -132,7 +133,7 @@ web/        Next.js app - landing, mandate builder, keyless agent, settle, Walru
 ```bash
 # Move package - DeepBook is vendored (vendor/deepbook, corrected Published.toml) so a fresh clone
 # builds + links to live testnet DeepBook with NO --allow-dirty and no cache edits.
-cd sentinel && sui move build && sui move test          # 32 passed
+cd sentinel && sui move build && sui move test          # 34 passed
 
 # Whole workspace (sdk + web)
 pnpm install

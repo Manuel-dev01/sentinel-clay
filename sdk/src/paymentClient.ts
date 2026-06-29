@@ -26,7 +26,7 @@ export interface PayMockArgs {
   minBaseOut?: bigint;
 }
 
-/** Builds + signs the venue PTBs from TS — the same `authorize → execute` path the manual
+/** Builds + signs the venue PTBs from TS - the same `authorize → execute` path the manual
  *  `sui client ptb` smoke used, now driven by an AuthorizationProvider's witness material. */
 export class PaymentClient {
   constructor(
@@ -65,7 +65,11 @@ export class PaymentClient {
     const intent = this.intentCall(tx, pkg, a.intent);
     const witness = this.witnessCall(tx, pkg, a.witness);
     const deepCoin = tx.moveCall({ target: '0x2::coin::zero', typeArguments: [DEEPBOOK.deepType] });
-    const [quoteCoin] = tx.splitCoins(tx.gas, [tx.pure.u64(a.intent.amount)]);
+    // Source the trade principal from the user's OWN coins (owned coins / address balance), never the
+    // gas coin: under Enoki-sponsored gas the gas coin belongs to the sponsor, so splitting from it
+    // would spend the sponsor's SUI instead of the user's mandate wallet. Using tx.coin also honors a
+    // non-SUI quoteType (Coin<Q>). (Audit H2/H3.)
+    const quoteCoin = tx.coin({ balance: a.intent.amount, type: quoteType });
     tx.moveCall({
       target: `${pkg}::payment::pay_real`,
       typeArguments: [baseType, quoteType],
