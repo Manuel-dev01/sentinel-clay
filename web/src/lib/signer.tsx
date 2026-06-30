@@ -34,9 +34,15 @@ export interface SignerApi {
   connect: () => Promise<void>;
   disconnect: () => void;
   faucet: () => Promise<void>;
-  signExecute: (tx: Transaction) => Promise<ExecResult>;
+  // opts.expectRevert: the tx is EXPECTED to abort on-chain (a rogue/replay demo). Submit it user-paid
+  // with an explicit gas budget so the revert is COMMITTED on-chain (a real, explorer-viewable digest),
+  // instead of being thrown pre-submission by the sponsor/auto-budget dry-run.
+  signExecute: (tx: Transaction, opts?: { expectRevert?: boolean }) => Promise<ExecResult>;
   signMessage: (msg: Uint8Array) => Promise<{ signature: string; bytes: string }>;
 }
+
+/** Gas budget for an intentionally-aborting settle (aborts early, so well under this). */
+const REVERT_GAS_BUDGET = 50_000_000n;
 
 const Ctx = createContext<SignerApi | null>(null);
 export function useSigner(): SignerApi {
@@ -96,10 +102,13 @@ export function LocalSignerProvider({ children }: { children: React.ReactNode })
     }
   }, [kp]);
   const signExecute = useCallback(
-    async (tx: Transaction): Promise<ExecResult> => {
+    async (tx: Transaction, opts?: { expectRevert?: boolean }): Promise<ExecResult> => {
       if (!kp) throw new Error('not connected');
       setBusy(true);
       try {
+        // Explicit budget => no auto-budget dry-run, so an aborting tx is submitted and commits as
+        // failed (with a digest) instead of throwing pre-submission.
+        if (opts?.expectRevert) tx.setGasBudget(REVERT_GAS_BUDGET);
         const res = await suiClient().signAndExecuteTransaction({
           signer: kp,
           transaction: tx,
@@ -217,10 +226,30 @@ export function EnokiSignerProvider({ children }: { children: React.ReactNode })
   // Gas-free: server creates a sponsored tx (Enoki secret key), the wallet signs, server executes.
   // If the sponsored seam fails, fall back to a user-paid signAndExecute so the flow never dead-ends.
   const signExecute = useCallback(
-    async (tx: Transaction): Promise<ExecResult> => {
+    async (tx: Transaction, opts?: { expectRevert?: boolean }): Promise<ExecResult> => {
       if (!account) throw new Error('not connected');
       setBusy(true);
       try {
+        if (opts?.expectRevert) {
+          // Rogue/replay: sponsorship would reject a failing tx, so submit USER-PAID with an explicit
+          // gas budget and a raw execute. The on-chain revert is then COMMITTED (an explorer digest),
+          // which is the "rogue aborted on-chain, live" demo shot.
+          tx.setSender(account.address);
+          tx.setGasBudget(REVERT_GAS_BUDGET);
+          const { bytes, signature } = await signTransaction({ transaction: tx, chain: 'sui:testnet' });
+          const r = await client.executeTransactionBlock({
+            transactionBlock: bytes,
+            signature,
+            options: { showEffects: true, showEvents: true, showObjectChanges: true },
+          });
+          return {
+            digest: r.digest,
+            status: (r.effects as any)?.status?.status ?? 'unknown',
+            effects: r.effects,
+            events: (r as any).events,
+            objectChanges: (r as any).objectChanges,
+          };
+        }
         try {
           const kind = await tx.build({ client: client as any, onlyTransactionKind: true });
           const sp = await fetch('/api/sponsor', {

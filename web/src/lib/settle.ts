@@ -17,7 +17,7 @@ function payClient() {
 export async function settleProposal(
   p: Proposal,
   mandate: ArmedMandate,
-  signExecute: (tx: any) => Promise<ExecResult>,
+  signExecute: (tx: any, opts?: { expectRevert?: boolean }) => Promise<ExecResult>,
 ): Promise<ExecResult> {
   const m = await readMandate(mandate.mandateId);
   const provider = providerForOwner(mandate.owner);
@@ -40,7 +40,9 @@ export async function settleProposal(
     quoteType: DEEPBOOK.suiType,
     minBaseOut: 0n,
   });
-  return signExecute(tx);
+  // A non-compliant (rogue/over-cap) proposal is expected to abort: submit it so the revert COMMITS
+  // on-chain (explorer-viewable) rather than being thrown by the sponsor/auto-budget dry-run.
+  return signExecute(tx, { expectRevert: p.kind !== 'compliant' });
 }
 
 // Replay attack: a FRESH intent at the current nonce, but signed with an ALREADY-CONSUMED witness
@@ -49,7 +51,7 @@ export async function settleProposal(
 export async function replaySettle(
   p: Proposal,
   mandate: ArmedMandate,
-  signExecute: (tx: any) => Promise<ExecResult>,
+  signExecute: (tx: any, opts?: { expectRevert?: boolean }) => Promise<ExecResult>,
 ): Promise<ExecResult> {
   const m = await readMandate(mandate.mandateId);
   if (m.nonce === 0n) throw new Error('Approve a compliant trade first, then replay its authorization.');
@@ -77,7 +79,8 @@ export async function replaySettle(
     quoteType: DEEPBOOK.suiType,
     minBaseOut: 0n,
   });
-  return signExecute(tx);
+  // A replay is expected to abort (E_REPLAY): commit it on-chain so the abort is explorer-viewable.
+  return signExecute(tx, { expectRevert: true });
 }
 
 /** Parse the Move abort code out of a failed-tx error message. Covers both the executed-tx form
