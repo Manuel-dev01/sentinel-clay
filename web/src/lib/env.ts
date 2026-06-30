@@ -35,9 +35,13 @@ export const APP_REGISTRY_ID =
 // the /agent live feed shows the same stream AND anyone can approve it (the mandate was created with the
 // SDK's deterministic DEFAULT_SEED, so any browser can mint valid one-shot witnesses for it). Empty → the
 // live feed follows the viewer's own armed mandate.
-export const AGENT_MANDATE_ID = process.env.NEXT_PUBLIC_AGENT_MANDATE_ID ?? '';
+export const AGENT_MANDATE_ID =
+  process.env.NEXT_PUBLIC_AGENT_MANDATE_ID ??
+  '0x4758a6daad557ea95e22ea103ef4d0b64518539a246b95136c32275aa826b3e2';
 /** Owner of the shared demo mandate (its proceeds recipient, per the H1 binding). */
-export const AGENT_OWNER = process.env.NEXT_PUBLIC_AGENT_OWNER ?? '';
+export const AGENT_OWNER =
+  process.env.NEXT_PUBLIC_AGENT_OWNER ??
+  '0x14c6ce9f17daec0d358b01becc22aeff722123634cddb88d911b8c40f98c37cb';
 
 export const CATEGORIES = [
   { id: 0, label: 'Stablecoins', key: 'stable' },
