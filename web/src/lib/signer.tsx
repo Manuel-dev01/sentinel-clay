@@ -10,7 +10,6 @@ import {
   useDisconnectWallet,
   useSignPersonalMessage,
   useSignTransaction,
-  useSignAndExecuteTransaction,
   useSuiClient,
 } from '@mysten/dapp-kit';
 import { registerEnokiWallets, type EnokiWallet } from '@mysten/enoki';
@@ -41,8 +40,9 @@ export interface SignerApi {
   signMessage: (msg: Uint8Array) => Promise<{ signature: string; bytes: string }>;
 }
 
-/** Gas budget for an intentionally-aborting settle (aborts early, so well under this). */
-const REVERT_GAS_BUDGET = 50_000_000n;
+/** Explicit gas budget for settles (covers a DeepBook swap; an abort uses far less, refunded). Setting
+ *  it skips the auto-budget dry-run, so a settle that aborts still COMMITS on-chain (explorer digest). */
+const SETTLE_GAS_BUDGET = 100_000_000n;
 
 const Ctx = createContext<SignerApi | null>(null);
 export function useSigner(): SignerApi {
@@ -106,9 +106,10 @@ export function LocalSignerProvider({ children }: { children: React.ReactNode })
       if (!kp) throw new Error('not connected');
       setBusy(true);
       try {
-        // Explicit budget => no auto-budget dry-run, so an aborting tx is submitted and commits as
-        // failed (with a digest) instead of throwing pre-submission.
-        if (opts?.expectRevert) tx.setGasBudget(REVERT_GAS_BUDGET);
+        // Explicit budget on ANY settle => no auto-budget dry-run, so even a settle that aborts (rogue,
+        // or a compliant trade caught by a budget race) is submitted and commits as failed (with a
+        // digest) instead of throwing pre-submission. (opts is only passed for settles, not arm/revoke.)
+        if (opts) tx.setGasBudget(SETTLE_GAS_BUDGET);
         const res = await suiClient().signAndExecuteTransaction({
           signer: kp,
           transaction: tx,
@@ -162,7 +163,6 @@ export function EnokiSignerProvider({ children }: { children: React.ReactNode })
   const { mutate: disconnectWallet } = useDisconnectWallet();
   const { mutateAsync: signPersonalMessage } = useSignPersonalMessage();
   const { mutateAsync: signTransaction } = useSignTransaction();
-  const { mutateAsync: signAndExecute } = useSignAndExecuteTransaction();
   const [googleWallet, setGoogleWallet] = useState<EnokiWallet | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -230,12 +230,11 @@ export function EnokiSignerProvider({ children }: { children: React.ReactNode })
       if (!account) throw new Error('not connected');
       setBusy(true);
       try {
-        if (opts?.expectRevert) {
-          // Rogue/replay: sponsorship would reject a failing tx, so submit USER-PAID with an explicit
-          // gas budget and a raw execute. The on-chain revert is then COMMITTED (an explorer digest),
-          // which is the "rogue aborted on-chain, live" demo shot.
+        // User-paid submit: explicit gas budget + raw execute, so an aborting settle COMMITS on-chain
+        // (an explorer digest) instead of being thrown by the sponsor/auto-budget dry-run.
+        const submitUserPaid = async (): Promise<ExecResult> => {
           tx.setSender(account.address);
-          tx.setGasBudget(REVERT_GAS_BUDGET);
+          tx.setGasBudget(SETTLE_GAS_BUDGET);
           const { bytes, signature } = await signTransaction({ transaction: tx, chain: 'sui:testnet' });
           const r = await client.executeTransactionBlock({
             transactionBlock: bytes,
@@ -249,7 +248,9 @@ export function EnokiSignerProvider({ children }: { children: React.ReactNode })
             events: (r as any).events,
             objectChanges: (r as any).objectChanges,
           };
-        }
+        };
+        // Rogue/replay is expected to abort; skip sponsorship (it rejects failing txs) and commit it.
+        if (opts?.expectRevert) return await submitUserPaid();
         try {
           const kind = await tx.build({ client: client as any, onlyTransactionKind: true });
           const sp = await fetch('/api/sponsor', {
@@ -267,15 +268,16 @@ export function EnokiSignerProvider({ children }: { children: React.ReactNode })
           if (ex.error) throw new Error(ex.error);
           return await fetchResult(ex.digest);
         } catch (sponsorErr) {
-          console.warn('[enoki] sponsored path failed; falling back to user-paid gas:', sponsorErr);
-          const r = await signAndExecute({ transaction: tx });
-          return await fetchResult(r.digest);
+          // Enoki rejects a tx that would abort (and transient sponsor errors). Submit user-paid with an
+          // explicit budget so a COMPLIANT trade that aborts (e.g. a budget race) still commits on-chain.
+          console.warn('[enoki] sponsored path failed; submitting user-paid:', sponsorErr);
+          return await submitUserPaid();
         }
       } finally {
         setBusy(false);
       }
     },
-    [account, client, signTransaction, signAndExecute, fetchResult],
+    [account, client, signTransaction, fetchResult],
   );
 
   const api = useMemo<SignerApi>(
