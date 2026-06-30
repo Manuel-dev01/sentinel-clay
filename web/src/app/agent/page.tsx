@@ -53,12 +53,14 @@ export default function Dashboard() {
     queryFn: () => readMandate(mandate!.mandateId),
   });
 
-  // The autonomous worker streams proposals to Upstash. When AGENT_MANDATE_ID is configured the feed
-  // follows THAT mandate (proof-of-life for any visitor); otherwise it follows the viewer's own mandate.
-  // Fresh items are merged into the list so they appear with no clicks. The agent only proposes;
-  // approving a proposal you OWN goes through your signer (settleProposal) and Move re-checks on settle.
-  const feedMandate = AGENT_MANDATE_ID || mandate?.mandateId || '';
-  const owns = !AGENT_MANDATE_ID || AGENT_MANDATE_ID === mandate?.mandateId;
+  // The feed follows the ACTIVE mandate: a fresh visitor's default is the shared demo mandate (so they
+  // see a live agent immediately), while a user who armed their own sees + approves THEIR mandate's
+  // stream. The page self-drives whichever one is active. Approvable when it's the demo mandate (anyone
+  // can mint the DEFAULT_SEED witness) or you own the active mandate. Either way Move re-checks on settle.
+  const feedMandate = mandate?.mandateId ?? '';
+  const isDemo = !!mandate && mandate.mandateId === AGENT_MANDATE_ID;
+  const isOwner = !!address && !!mandate && address.toLowerCase() === mandate.owner.toLowerCase();
+  const canApprove = isDemo || isOwner;
   const feedQ = useQuery<{ configured: boolean; proposals: (Proposal & { ts: number })[]; heartbeat: Heartbeat | null }>({
     queryKey: ['agentFeed', feedMandate],
     enabled: !!feedMandate,
@@ -75,9 +77,10 @@ export default function Dashboard() {
     // feed is newest-first; reverse so the newest ends up at the top after prepending each.
     (async () => {
       for (const it of [...fresh].reverse()) {
-        // Only evaluate the on-chain verdict / allow approval when the viewer owns the feed's mandate.
-        const row = owns ? await enrich(it, mq.data) : { p: it, status: 'pending' as const };
-        setRows((rs) => [{ ...row, live: true, foreign: !owns }, ...rs].slice(0, 12));
+        // Feed mandate == active mandate, so the on-chain verdict is evaluated against it. `foreign`
+        // (read-only) only when the viewer can neither use DEFAULT_SEED (demo) nor owns the mandate.
+        const row = await enrich(it, mq.data);
+        setRows((rs) => [{ ...row, live: true, foreign: !canApprove }, ...rs].slice(0, 12));
       }
     })();
   }, [feedQ.data]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -153,7 +156,7 @@ export default function Dashboard() {
   async function approve(idx: number) {
     const row = rows[idx];
     if (row.foreign) {
-      setErr('This proposal belongs to the demo agent mandate (you do not own it). Arm your own mandate and point the worker at it to approve from the feed.');
+      setErr('You do not own this mandate, so you cannot approve its proposals. Arm your own mandate to run an agent you control.');
       return;
     }
     setErr('');
