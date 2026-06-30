@@ -6,7 +6,7 @@ AI agent can only *propose* trades and a Move policy enforces your budget on eve
 - **[Getting started](getting-started.md)** - clone from GitHub, build, test, run the app, and walk
   the demo.
 - **[How it works](architecture.md)** - the mandate, the payment flow, the one-shot witness, the
-  shared predicate, and the Sui stack (including the Nautilus stretch).
+  shared predicate, the autonomous agent worker, and the Sui stack (including the Nautilus stretch).
 - **[SDK integration](sdk.md)** - use `@sentinel/sdk` to authorize and settle trades from your own
   agent.
 - **[Contributing](../CONTRIBUTING.md)** - the GitHub fork/branch/PR flow and the checks to run.

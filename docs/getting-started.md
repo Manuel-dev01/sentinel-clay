@@ -61,6 +61,7 @@ onboarding and the LLM agent.
 | `NEXT_PUBLIC_ENOKI_API_KEY` / `ENOKI_SECRET_KEY` | zkLogin + sponsored gas | [portal.enoki.mystenlabs.com](https://portal.enoki.mystenlabs.com) |
 | `NEXT_PUBLIC_GOOGLE_CLIENT_ID` | Google OAuth (register it in Enoki too) | [console.cloud.google.com](https://console.cloud.google.com) |
 | `DEEPSEEK_API_KEY` | the "Yield Hunter" agent (server-only) | [platform.deepseek.com](https://platform.deepseek.com) |
+| `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` + `AGENT_MANDATE_ID` | so the app reads the autonomous worker's live feed (server-only; see step 5) | [upstash.com](https://upstash.com) |
 | `NEXT_PUBLIC_SENTINEL_PKG`, `NEXT_PUBLIC_APP_REGISTRY` | on-chain ids (testnet defaults shipped) | - |
 
 > `.env.local` is gitignored. When deploying (e.g. Vercel), set these in the host's environment
@@ -81,9 +82,13 @@ pnpm --filter @sentinel/agent dev      # ticks every ~12s; logs each proposal
 ```
 
 Set the same `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` (and `AGENT_MANDATE_ID`) in
-`web/.env.local` so the page can read the feed. The `/agent` screen then shows an "agent live" heartbeat
-and proposals appearing with **no clicks**. To deploy it always-on, push the repo to
-[Render](https://render.com) as a Background Worker - the blueprint is at [`agent/render.yaml`](../agent/render.yaml).
+`web/.env.local` (and in your Vercel project's env, to light up the feed on the deployed site) so the
+app can read it. The `/agent` screen then shows an "agent live" heartbeat and proposals appearing with
+**no clicks**; without these vars the feed is simply empty and the manual propose button still works.
+
+Running the worker **locally is free**. To host it always-on, deploy `agent/` to any worker host
+([`agent/render.yaml`](../agent/render.yaml) is a Render Background Worker blueprint - note Render
+workers require a paid plan; Railway and similar also work).
 
 ## 6. Walk the demo
 

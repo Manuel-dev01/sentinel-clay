@@ -7,6 +7,7 @@ On-chain Move re-checks and aborts regardless: the provider is an optimization, 
 ## Pieces
 | Module | Role |
 |--------|------|
+| `proposer.ts` | The keyless **Yield Hunter** brain: reads the mandate + live DeepBook, LLM-sizes a compliant `Proposal` (`proposeOnce`, heuristic fallback) or a tampered one (`tamperProposal`). Shared by the web route and the autonomous worker so they can't drift. Proposes only; never signs. |
 | `provider.ts` | `AuthorizationProvider` interface + `WitnessMaterial` + `PolicyDeniedError` |
 | `localWitness.ts` | **default / guarantee.** Deterministic `preimage_n = keccak256(seed‖bcs(n))`; `keccak256(preimage_n)` is the on-chain commitment. Byte-identical to `payment::commitment_of`. |
 | `sealProvider.ts` | **Seal adapter (Model B).** Pre-encrypts each preimage under `id = mandate_id‖nonce`; the agent decrypts preimage_n only by passing the key-server dry-run of `seal_approve` with its actual intent. Policy-deny ⇒ `PolicyDeniedError`; key servers unreachable ⇒ graceful fallback to local. |
@@ -22,7 +23,7 @@ pnpm test            # keccak↔Move parity (on-chain C0/C1), seal_id codec roun
 pnpm smoke           # live testnet run - needs SENTINEL_PKG + SUI_PRIVATE_KEY (a funded signer)
 ```
 `pnpm smoke` is opt-in: it needs a funded signer key, which is intentionally never committed or exported
-(CLAUDE.md §9 - the agent never holds a key). In Stage 5 a zkLogin wallet signs in-browser. Seal key
+(the agent never holds a key). In the app a zkLogin wallet signs in-browser. Seal key
 servers are configured via `SEAL_KEY_SERVERS` (the SDK's `getAllowlistedKeyServers` helper was removed).
 
 Notes: sui 2.x client is `SuiJsonRpcClient` (`@mysten/sui/jsonRpc`); it exposes `.core`, so it is also the

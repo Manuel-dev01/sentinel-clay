@@ -79,8 +79,8 @@ settlement.
 ## The autonomous agent worker
 
 So the agent genuinely *hunts* rather than waiting for a button, the [`agent/`](../agent) package is a
-standalone always-on worker (deployable to [Render](../agent/render.yaml) as a Background Worker). On
-each tick (~12s) it calls the same `proposeOnce` brain and **streams** the proposal to an
+standalone always-on worker (run it locally for free, or host it - [`agent/render.yaml`](../agent/render.yaml)
+is a Render Background Worker blueprint). On each tick (~12s) it calls the same `proposeOnce` brain and **streams** the proposal to an
 [Upstash Redis](https://upstash.com) feed; every Nth tick it streams a *tampered* proposal (over-cap or
 replay) so the on-chain abort is always demonstrable. The `/agent` page polls a server route
 (`/api/agent/feed`, which holds the Redis token) and renders the proposals live with an "agent live"
