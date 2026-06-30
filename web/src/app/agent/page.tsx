@@ -39,7 +39,7 @@ const DEEP_DP = 1e6;
 
 export default function Dashboard() {
   const { mandate, setMandate } = useMandate();
-  const { signMessage, signExecute, busy } = useSigner();
+  const { address, signMessage, signExecute, busy } = useSigner();
   const audit = (p: Proposal, verdict: 'APPROVED' | 'ABORTED', code?: number, txDigest?: string) =>
     recordVerdict({ mandateId: mandate!.mandateId, owner: mandate!.owner, signMessage, p, verdict, code, txDigest });
   const [rows, setRows] = useState<Row[]>([]);
@@ -243,9 +243,13 @@ export default function Dashboard() {
           >
             ⚠ Tampered agent · replay
           </button>
-          <button onClick={revoke} className="ml-auto border border-abort/50 px-4 py-2.5 font-mono text-xs font-bold text-abort hover:bg-abort/10">
-            Revoke mandate
-          </button>
+          {address && address.toLowerCase() === mandate.owner.toLowerCase() ? (
+            <button onClick={revoke} className="ml-auto border border-abort/50 px-4 py-2.5 font-mono text-xs font-bold text-abort hover:bg-abort/10">
+              Revoke mandate
+            </button>
+          ) : (
+            <span className="ml-auto font-mono text-[11px] text-muted">shared demo mandate · only its owner can revoke</span>
+          )}
         </div>
 
         {err && <div className="border border-gold/40 bg-panel p-3 font-mono text-xs text-gold">{err}</div>}
