@@ -37,6 +37,20 @@ interface Heartbeat {
 
 const DEEP_DP = 1e6;
 
+/** Human expiry: years / days / hours, so a far-future demo expiry doesn't render as e.g. "644349h". */
+function fmtExpiry(ms: number): string {
+  if (ms <= 0) return 'expired';
+  const h = ms / 3600_000;
+  if (h >= 24 * 365) return `${Math.round(h / (24 * 365))}y`;
+  if (h >= 48) return `${Math.round(h / 24)}d`;
+  return `${Math.round(h)}h`;
+}
+
+/** A friendly banner for an on-chain abort (the rogue/replay "wow") instead of a raw MoveAbort dump. */
+function abortBanner(code?: number): string {
+  return `Aborted on-chain · ${code !== undefined ? codeLabel(code) : 'reverted'} - the Move policy rejected it; no funds moved.`;
+}
+
 export default function Dashboard() {
   const { mandate, setMandate } = useMandate();
   const { address, signMessage, signExecute, busy } = useSigner();
@@ -80,7 +94,7 @@ export default function Dashboard() {
         // Feed mandate == active mandate, so the on-chain verdict is evaluated against it. `foreign`
         // (read-only) only when the viewer can neither use DEFAULT_SEED (demo) nor owns the mandate.
         const row = await enrich(it, mq.data);
-        setRows((rs) => [{ ...row, live: true, foreign: !canApprove }, ...rs].slice(0, 12));
+        setRows((rs) => [{ ...row, live: true, foreign: !canApprove }, ...rs].slice(0, 20));
       }
     })();
   }, [feedQ.data]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -114,7 +128,7 @@ export default function Dashboard() {
   const now = Date.now();
   const spent = m ? effectiveSpent(m, now) : 0n;
   const pct = m && m.capMist > 0n ? Math.min(100, Number((spent * 10000n) / m.capMist) / 100) : 0;
-  const expiresInH = m ? Math.max(0, Math.round((Number(m.expiryMs) - now) / 3600_000)) : 0;
+  const expiresLabel = m ? fmtExpiry(Number(m.expiryMs) - now) : '·';
 
   async function enrich(p: Proposal, mState: MandateState | undefined): Promise<Row> {
     let checks: Check[] | undefined;
@@ -145,7 +159,7 @@ export default function Dashboard() {
       }
       if (j.error) throw new Error(j.error);
       const row = await enrich(j.proposal as Proposal, mq.data);
-      setRows((rs) => [row, ...rs].slice(0, 8));
+      setRows((rs) => [row, ...rs].slice(0, 20));
     } catch (e: any) {
       setErr(e?.message ?? String(e));
     } finally {
@@ -174,6 +188,7 @@ export default function Dashboard() {
             : r,
         ),
       );
+      if (!ok) setErr(abortBanner(code));
       audit(row.p, ok ? 'APPROVED' : 'ABORTED', code, res.digest);
       mq.refetch();
     } catch (e: any) {
@@ -181,9 +196,11 @@ export default function Dashboard() {
       const code = abortCodeFromError(msg) ?? undefined;
       setRows((rs) => rs.map((r, i) => (i === idx ? { ...r, status: 'aborted', code } : r)));
       setErr(
-        /insufficient|balance|gas|budget/i.test(msg) && !code
-          ? 'Insufficient balance to settle. Faucet more SUI on the Wallet screen.'
-          : msg,
+        code !== undefined
+          ? abortBanner(code)
+          : /insufficient|balance|gas|budget/i.test(msg)
+            ? 'Insufficient balance to settle. Faucet more SUI on the Wallet screen.'
+            : msg,
       );
       audit(row.p, 'ABORTED', code);
       mq.refetch();
@@ -217,7 +234,7 @@ export default function Dashboard() {
           </div>
           <Stat label="NONCE" value={m ? m.nonce.toString() : '·'} sub="one-shot, rotates each settle" />
           <Stat label="PROPOSALS" value={rows.length.toString()} sub={`${rows.filter((r) => r.status === 'settled').length} settled · ${rows.filter((r) => r.status === 'aborted').length} aborted`} />
-          <Stat label="EXPIRES IN" value={`${expiresInH}h`} sub={m?.revoked ? 'revoked' : 'auto-revoke'} accent />
+          <Stat label="EXPIRES IN" value={expiresLabel} sub={m?.revoked ? 'revoked' : 'auto-revoke'} accent />
         </div>
 
         {/* live autonomous feed status */}

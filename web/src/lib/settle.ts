@@ -80,8 +80,12 @@ export async function replaySettle(
   return signExecute(tx);
 }
 
-/** Parse the Move abort code out of a failed-tx error message (…MoveAbort(…, <code>)…). */
+/** Parse the Move abort code out of a failed-tx error message. Covers both the executed-tx form
+ *  (`…MoveAbort(…, <code>)…`) and the resolution/dry-run form (`MoveAbort in 5th command, abort code: 1`). */
 export function abortCodeFromError(msg: string): number | null {
-  const m = msg.match(/MoveAbort\([^)]*,\s*(\d+)\)/) ?? msg.match(/with code (\d+)/);
+  const m =
+    msg.match(/MoveAbort\([^)]*,\s*(\d+)\)/) ??
+    msg.match(/abort code:?\s*(\d+)/i) ??
+    msg.match(/with code (\d+)/);
   return m ? Number(m[1]) : null;
 }
