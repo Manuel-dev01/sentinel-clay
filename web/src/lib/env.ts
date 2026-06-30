@@ -31,10 +31,13 @@ export const CLOCK_ID = '0x00000000000000000000000000000000000000000000000000000
 export const APP_REGISTRY_ID =
   process.env.NEXT_PUBLIC_APP_REGISTRY ?? '0x0bdb186a4f3bc18b6a54689c437f57cd4d481694b64daf60d2d871f77858468f';
 
-// The mandate the autonomous worker hunts. When set, the /agent live feed shows THIS mandate's stream
-// (proof-of-life for any visitor), independent of the mandate the viewer has armed. Empty → the live
-// feed follows the viewer's own mandate.
+// The shared "demo agent" mandate. When set it is the app's default armed mandate for every visitor, so
+// the /agent live feed shows the same stream AND anyone can approve it (the mandate was created with the
+// SDK's deterministic DEFAULT_SEED, so any browser can mint valid one-shot witnesses for it). Empty → the
+// live feed follows the viewer's own armed mandate.
 export const AGENT_MANDATE_ID = process.env.NEXT_PUBLIC_AGENT_MANDATE_ID ?? '';
+/** Owner of the shared demo mandate (its proceeds recipient, per the H1 binding). */
+export const AGENT_OWNER = process.env.NEXT_PUBLIC_AGENT_OWNER ?? '';
 
 export const CATEGORIES = [
   { id: 0, label: 'Stablecoins', key: 'stable' },

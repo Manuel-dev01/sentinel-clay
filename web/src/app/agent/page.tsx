@@ -82,6 +82,16 @@ export default function Dashboard() {
     })();
   }, [feedQ.data]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Self-driving: while anyone has this page open, ping the (debounced) tick route so the agent keeps
+  // proposing autonomously without a separate always-on worker. The lock ensures ~one tick per window.
+  useEffect(() => {
+    if (!feedMandate) return;
+    const ping = () => fetch(`/api/agent/tick?mandateId=${feedMandate}`).catch(() => {});
+    ping();
+    const id = setInterval(ping, 5000);
+    return () => clearInterval(id);
+  }, [feedMandate]);
+
   if (!mandate) {
     return (
       <AppShell title="Agent">

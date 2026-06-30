@@ -76,23 +76,31 @@ emits a `PaymentIntent` proposal with a plain-English rationale. The decision lo
 deterministic heuristic. Custody always stays with your wallet; your zkLogin session signs the
 settlement.
 
-## The autonomous agent worker
+## The autonomous agent (self-driving, no host needed)
 
-So the agent genuinely *hunts* rather than waiting for a button, the [`agent/`](../agent) package is a
-standalone always-on worker (run it locally for free, or host it - [`agent/render.yaml`](../agent/render.yaml)
-is a Render Background Worker blueprint). On each tick (~12s) it calls the same `proposeOnce` brain and **streams** the proposal to an
-[Upstash Redis](https://upstash.com) feed; every Nth tick it streams a *tampered* proposal (over-cap or
-replay) so the on-chain abort is always demonstrable. The `/agent` page polls a server route
-(`/api/agent/feed`, which holds the Redis token) and renders the proposals live with an "agent live"
-heartbeat - they appear with no clicks.
+So the agent genuinely *hunts* rather than waiting for a button, it runs on a tick. The default mode is
+**self-driving on Vercel**: while anyone has the `/agent` page open, the page pings a debounced server
+route (`/api/agent/tick`); an [Upstash Redis](https://upstash.com) lock ensures only ~one tick per window
+runs no matter how many visitors there are. The winning tick calls the same `proposeOnce` brain and
+**streams** the proposal to an Upstash feed; every Nth tick it streams a *tampered* proposal (over-cap or
+replay) so the on-chain abort is always demonstrable. The page polls `/api/agent/feed` (which holds the
+Redis token server-side) and renders the proposals live with an "agent live" heartbeat - no clicks, and
+no separate always-on host or paid worker. The [`agent/`](../agent) package is the same loop as a
+standalone worker for a truly always-on deployment ([`agent/render.yaml`](../agent/render.yaml) is a
+Render Background Worker blueprint), but it is optional.
 
 ```
-  Render worker (no key) ──LPUSH proposal + heartbeat──▶ Upstash Redis
-  web /api/agent/feed (server) ◀──read── Redis
-  /agent page ──poll ~3s──▶ /api/agent/feed ⇒ live feed; you Approve ⇒ Move enforces
+  /agent page (any visitor) ──ping (debounced)──▶ /api/agent/tick ──proposeOnce──▶ Upstash feed
+  /agent page ──poll ~3s──▶ /api/agent/feed ◀──read── Upstash ⇒ live stream; you Approve ⇒ Move enforces
 ```
 
-Crucially this changes **nothing** about custody: the worker only proposes (pure data). Settlement
+The same stream is shared by every visitor via a **shared demo mandate** (the app's default), created
+with the SDK's deterministic `DEFAULT_SEED` so *any* browser can mint the valid one-shot witness and
+approve a streamed proposal - the approver signs with their own wallet, proceeds are bound to the
+mandate owner, and Move re-checks. (A leaked `DEFAULT_SEED` is not a key: it can only ever settle
+policy-compliant trades against that one mandate.)
+
+Crucially this changes **nothing** about custody: the tick only proposes (pure data). Settlement
 still requires your signature, and `payment::pay` re-checks the mandate on-chain. The worker can be off,
 asleep, or compromised and your funds remain bounded by Move.
 

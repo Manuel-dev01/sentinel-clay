@@ -145,6 +145,8 @@ export interface ProposeArgs {
   mandateId: string;
   /** DeepSeek API key; when absent the deterministic heuristic is used. */
   deepseekKey?: string;
+  /** Cap the proposed size (SUI) so any faucet-funded approver can afford the coin input. 0/undefined = no cap. */
+  maxSui?: number;
   /** Override "now" for tests; defaults to Date.now(). */
   now?: number;
 }
@@ -162,7 +164,8 @@ export async function proposeOnce(a: ProposeArgs): Promise<ProposeResult> {
   // not just the budget · otherwise a "compliant" trade fails on insufficient balance, not policy.
   const balanceSui = Number(await suiBalanceMist(client, m.owner)) / MIST;
   const affordable = Math.max(0, balanceSui - 0.05);
-  const ceiling = Math.min(remainingSui, affordable);
+  // Cap to maxSui (when set) so a streamed proposal stays affordable for any approver, not just the owner.
+  const ceiling = Math.min(remainingSui, affordable, a.maxSui && a.maxSui > 0 ? a.maxSui : Infinity);
 
   if (remainingSui <= 0.001) {
     return { full: true, message: 'Daily budget spent; the agent is holding until rollover.' };

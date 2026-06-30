@@ -16,6 +16,7 @@ const MANDATE_ID = required('AGENT_MANDATE_ID');
 const DEEPSEEK_KEY = process.env.DEEPSEEK_API_KEY || undefined;
 const TICK_MS = int(process.env.TICK_MS, 12_000);
 const ROGUE_EVERY = int(process.env.ROGUE_EVERY, 6); // every Nth tick streams a tampered proposal
+const MAX_SUI = Number(process.env.AGENT_MAX_SUI || 0) || undefined; // cap proposal size so approvers afford it
 const FEED_MAX = 30;
 const HB_TTL_S = Math.max(30, Math.ceil((TICK_MS * 3) / 1000));
 
@@ -66,7 +67,7 @@ async function tick(n: number) {
     return;
   }
 
-  const res = await proposeOnce({ client, mandateId: MANDATE_ID, deepseekKey: DEEPSEEK_KEY });
+  const res = await proposeOnce({ client, mandateId: MANDATE_ID, deepseekKey: DEEPSEEK_KEY, maxSui: MAX_SUI });
   if ('full' in res) {
     console.log(`[tick ${n}] holding · ${res.message}`);
     await heartbeat({ ts: now, tick: n, status: 'holding', message: res.message });

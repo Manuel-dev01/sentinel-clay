@@ -68,27 +68,32 @@ onboarding and the LLM agent.
 > settings and add your deployed URL to the Google OAuth origins and the Enoki project's allowed
 > origins. `NEXT_PUBLIC_FORCE_LOCAL=1` forces the demo wallet for local development.
 
-## 5. (Optional) run the autonomous agent
+## 5. (Optional) the autonomous agent
 
-The web app lets you propose on demand, but the agent can also run **24/7 on its own**. The worker in
-[`agent/`](../agent) ticks on an interval, reads the on-chain mandate + live DeepBook, asks the LLM for
-a trade within budget, and **streams proposals** to an [Upstash Redis](https://upstash.com) feed the
-`/agent` page renders live. It holds **no key** and never signs - you still approve each settle, and
-Move re-checks on-chain. See [how it works](architecture.md#the-autonomous-agent-worker).
+The agent runs on a tick, not just on a button. The default mode is **self-driving and needs no extra
+host**: while anyone has the `/agent` page open it pings a debounced route (`/api/agent/tick`) that
+generates one proposal per window and **streams** it to an [Upstash Redis](https://upstash.com) feed the
+page renders live (with an "agent live" heartbeat, no clicks). Every visitor shares the same stream via a
+**shared demo mandate**, and because it was created with the SDK's `DEFAULT_SEED`, any visitor can
+approve a streamed proposal from their own wallet - Move re-checks every settle. See
+[how it works](architecture.md#the-autonomous-agent-self-driving-no-host-needed).
+
+To enable it, set these (in `web/.env.local`, and in your Vercel project for the deployed site):
 
 ```bash
-cp agent/.env.example agent/.env       # fill AGENT_MANDATE_ID + UPSTASH_* (+ DEEPSEEK_API_KEY)
-pnpm --filter @sentinel/agent dev      # ticks every ~12s; logs each proposal
+UPSTASH_REDIS_REST_URL=...        # free at https://upstash.com
+UPSTASH_REDIS_REST_TOKEN=...
+AGENT_MANDATE_ID=0x...            # the shared demo mandate (a new_mandate created with DEFAULT_SEED)
+NEXT_PUBLIC_AGENT_MANDATE_ID=0x...   # same id (public)
+NEXT_PUBLIC_AGENT_OWNER=0x...        # its owner (proceeds recipient)
+AGENT_MAX_SUI=0.05                   # cap proposal size so any faucet user can afford to approve
 ```
 
-Set the same `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` (and `AGENT_MANDATE_ID`) in
-`web/.env.local` (and in your Vercel project's env, to light up the feed on the deployed site) so the
-app can read it. The `/agent` screen then shows an "agent live" heartbeat and proposals appearing with
-**no clicks**; without these vars the feed is simply empty and the manual propose button still works.
-
-Running the worker **locally is free**. To host it always-on, deploy `agent/` to any worker host
-([`agent/render.yaml`](../agent/render.yaml) is a Render Background Worker blueprint - note Render
-workers require a paid plan; Railway and similar also work).
+Without these the feed is simply empty and the manual propose button still works. For a **truly
+always-on** loop (so the stream advances even with nobody viewing), the [`agent/`](../agent) package is
+the same loop as a standalone worker - run it locally for free (`pnpm --filter @sentinel/agent dev`) or
+host it ([`agent/render.yaml`](../agent/render.yaml) is a Render Background Worker blueprint; note Render
+workers need a paid plan).
 
 ## 6. Walk the demo
 
