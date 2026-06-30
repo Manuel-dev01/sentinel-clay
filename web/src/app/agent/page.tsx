@@ -11,7 +11,7 @@ import { readMandate, effectiveSpent, type MandateState } from '@/lib/onchain';
 import { buildChecks, evaluateOnChain, codeLabel, type Check } from '@/lib/predicate';
 import { settleProposal, replaySettle, abortCodeFromError } from '@/lib/settle';
 import { recordVerdict } from '@/lib/audit';
-import { MARKETS, PACKAGE_ID, EXPLORER } from '@/lib/env';
+import { MARKETS, PACKAGE_ID, EXPLORER, AGENT_MANDATE_ID } from '@/lib/env';
 import type { Proposal } from '@/lib/agentTypes';
 import { fmtSui, shortAddr } from '@/lib/format';
 
@@ -24,6 +24,7 @@ interface Row {
   code?: number;
   baseOut?: string;
   live?: boolean; // streamed by the autonomous worker (vs a manual button press)
+  foreign?: boolean; // streamed for the demo agent mandate the viewer does not own (display-only)
 }
 
 interface Heartbeat {
@@ -52,14 +53,17 @@ export default function Dashboard() {
     queryFn: () => readMandate(mandate!.mandateId),
   });
 
-  // The autonomous worker (Render) streams proposals to Upstash for THIS mandate; poll the feed and
-  // merge fresh ones into the proposals list so they appear with no clicks. The agent only proposes;
-  // approving still goes through the user's signer (settleProposal), and Move re-checks on settle.
+  // The autonomous worker streams proposals to Upstash. When AGENT_MANDATE_ID is configured the feed
+  // follows THAT mandate (proof-of-life for any visitor); otherwise it follows the viewer's own mandate.
+  // Fresh items are merged into the list so they appear with no clicks. The agent only proposes;
+  // approving a proposal you OWN goes through your signer (settleProposal) and Move re-checks on settle.
+  const feedMandate = AGENT_MANDATE_ID || mandate?.mandateId || '';
+  const owns = !AGENT_MANDATE_ID || AGENT_MANDATE_ID === mandate?.mandateId;
   const feedQ = useQuery<{ configured: boolean; proposals: (Proposal & { ts: number })[]; heartbeat: Heartbeat | null }>({
-    queryKey: ['agentFeed', mandate?.mandateId],
-    enabled: !!mandate,
+    queryKey: ['agentFeed', feedMandate],
+    enabled: !!feedMandate,
     refetchInterval: 3000,
-    queryFn: () => fetch(`/api/agent/feed?mandateId=${mandate!.mandateId}`).then((r) => r.json()),
+    queryFn: () => fetch(`/api/agent/feed?mandateId=${feedMandate}`).then((r) => r.json()),
   });
   const seenFeed = useRef<Set<string>>(new Set());
 
@@ -71,8 +75,9 @@ export default function Dashboard() {
     // feed is newest-first; reverse so the newest ends up at the top after prepending each.
     (async () => {
       for (const it of [...fresh].reverse()) {
-        const row = await enrich(it, mq.data);
-        setRows((rs) => [{ ...row, live: true }, ...rs].slice(0, 12));
+        // Only evaluate the on-chain verdict / allow approval when the viewer owns the feed's mandate.
+        const row = owns ? await enrich(it, mq.data) : { p: it, status: 'pending' as const };
+        setRows((rs) => [{ ...row, live: true, foreign: !owns }, ...rs].slice(0, 12));
       }
     })();
   }, [feedQ.data]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -137,6 +142,10 @@ export default function Dashboard() {
 
   async function approve(idx: number) {
     const row = rows[idx];
+    if (row.foreign) {
+      setErr('This proposal belongs to the demo agent mandate (you do not own it). Arm your own mandate and point the worker at it to approve from the feed.');
+      return;
+    }
     setErr('');
     setRows((rs) => rs.map((r, i) => (i === idx ? { ...r, status: 'settling' } : r)));
     try {
@@ -331,7 +340,10 @@ function ProposalCard({ row, idx, onApprove, onReject, owner }: { row: Row; idx:
       )}
 
       <div className="mt-4 flex items-center gap-3">
-        {status === 'pending' && (
+        {status === 'pending' && row.foreign && (
+          <span className="font-mono text-[11px] text-muted">read-only · streamed by the autonomous agent</span>
+        )}
+        {status === 'pending' && !row.foreign && (
           <>
             <button onClick={() => onApprove(idx)} className="bg-gold px-5 py-2.5 font-sans text-[13px] font-extrabold text-ink">
               Approve on-chain
