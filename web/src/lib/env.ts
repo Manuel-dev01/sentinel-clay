@@ -37,7 +37,7 @@ export const APP_REGISTRY_ID =
 // live feed follows the viewer's own armed mandate.
 export const AGENT_MANDATE_ID =
   process.env.NEXT_PUBLIC_AGENT_MANDATE_ID ??
-  '0x4758a6daad557ea95e22ea103ef4d0b64518539a246b95136c32275aa826b3e2';
+  '0xa8cfda58cb8332e31906925ed40f1f52d79225560f8539a55e0a5e372f8d379e';
 /** Owner of the shared demo mandate (its proceeds recipient, per the H1 binding). */
 export const AGENT_OWNER =
   process.env.NEXT_PUBLIC_AGENT_OWNER ??

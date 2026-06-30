@@ -11,7 +11,7 @@ import { readMandate, effectiveSpent, type MandateState } from '@/lib/onchain';
 import { buildChecks, evaluateOnChain, codeLabel, type Check } from '@/lib/predicate';
 import { settleProposal, replaySettle, abortCodeFromError } from '@/lib/settle';
 import { recordVerdict } from '@/lib/audit';
-import { MARKETS, PACKAGE_ID, EXPLORER, AGENT_MANDATE_ID } from '@/lib/env';
+import { MARKETS, PACKAGE_ID, EXPLORER } from '@/lib/env';
 import type { Proposal } from '@/lib/agentTypes';
 import { fmtSui, shortAddr } from '@/lib/format';
 
@@ -72,9 +72,11 @@ export default function Dashboard() {
   // stream. The page self-drives whichever one is active. Approvable when it's the demo mandate (anyone
   // can mint the DEFAULT_SEED witness) or you own the active mandate. Either way Move re-checks on settle.
   const feedMandate = mandate?.mandateId ?? '';
-  const isDemo = !!mandate && mandate.mandateId === AGENT_MANDATE_ID;
+  const connected = !!address;
   const isOwner = !!address && !!mandate && address.toLowerCase() === mandate.owner.toLowerCase();
-  const canApprove = isDemo || isOwner;
+  // Only the mandate OWNER can approve. The shared demo agent is a read-only live preview; to approve
+  // trades and see the on-chain abort, a user connects and arms their own mandate (then it's theirs).
+  const canApprove = isOwner;
   const feedQ = useQuery<{ configured: boolean; proposals: (Proposal & { ts: number })[]; heartbeat: Heartbeat | null }>({
     queryKey: ['agentFeed', feedMandate],
     enabled: !!feedMandate,
@@ -219,7 +221,14 @@ export default function Dashboard() {
   }
 
   return (
-    <AppShell title="Yield Hunter v2" subtitle="armed · hunting · the agent proposes, you sign, Move enforces">
+    <AppShell
+      title="Yield Hunter v2"
+      subtitle={
+        isOwner
+          ? 'armed · hunting · the agent proposes, you sign, Move enforces'
+          : 'live demo · the agent hunts autonomously · connect + arm your mandate to approve'
+      }
+    >
       <div className="flex flex-col gap-4 p-[30px]">
         {/* stat strip */}
         <div className="flex flex-wrap gap-4">
@@ -240,35 +249,53 @@ export default function Dashboard() {
         {/* live autonomous feed status */}
         <LiveFeedBanner hb={feedQ.data?.heartbeat ?? null} configured={feedQ.data?.configured} />
 
-        {/* controls */}
+        {/* controls - interactive only for the mandate OWNER; the shared demo is a read-only preview */}
         <div className="flex flex-wrap items-center gap-3 border border-hairsoft p-4">
-          <button
-            onClick={() => propose('propose')}
-            disabled={thinking || busy}
-            className="bg-gold px-5 py-2.5 font-sans text-[13px] font-extrabold text-ink disabled:opacity-60"
-          >
-            {thinking ? 'Agent thinking…' : 'Agent: propose now'}
-          </button>
-          <button
-            onClick={() => propose('tamper', { kind: 'overcap' })}
-            disabled={thinking || busy}
-            className="border border-abort/50 px-4 py-2.5 font-mono text-xs font-bold text-abort hover:bg-abort/10"
-          >
-            ⚠ Tampered agent · over-cap
-          </button>
-          <button
-            onClick={() => propose('tamper', { kind: 'replay' })}
-            disabled={thinking || busy}
-            className="border border-abort/50 px-4 py-2.5 font-mono text-xs font-bold text-abort hover:bg-abort/10"
-          >
-            ⚠ Tampered agent · replay
-          </button>
-          {address && address.toLowerCase() === mandate.owner.toLowerCase() ? (
-            <button onClick={revoke} className="ml-auto border border-abort/50 px-4 py-2.5 font-mono text-xs font-bold text-abort hover:bg-abort/10">
-              Revoke mandate
-            </button>
+          {isOwner ? (
+            <>
+              <button
+                onClick={() => propose('propose')}
+                disabled={thinking || busy}
+                className="bg-gold px-5 py-2.5 font-sans text-[13px] font-extrabold text-ink disabled:opacity-60"
+              >
+                {thinking ? 'Agent thinking…' : 'Agent: propose now'}
+              </button>
+              <button
+                onClick={() => propose('tamper', { kind: 'overcap' })}
+                disabled={thinking || busy}
+                className="border border-abort/50 px-4 py-2.5 font-mono text-xs font-bold text-abort hover:bg-abort/10"
+              >
+                ⚠ Tampered agent · over-cap
+              </button>
+              <button
+                onClick={() => propose('tamper', { kind: 'replay' })}
+                disabled={thinking || busy}
+                className="border border-abort/50 px-4 py-2.5 font-mono text-xs font-bold text-abort hover:bg-abort/10"
+              >
+                ⚠ Tampered agent · replay
+              </button>
+              {isOwner ? (
+                <button onClick={revoke} className="ml-auto border border-abort/50 px-4 py-2.5 font-mono text-xs font-bold text-abort hover:bg-abort/10">
+                  Revoke mandate
+                </button>
+              ) : (
+                <span className="ml-auto font-mono text-[11px] text-muted">shared demo mandate · only its owner can revoke</span>
+              )}
+            </>
           ) : (
-            <span className="ml-auto font-mono text-[11px] text-muted">shared demo mandate · only its owner can revoke</span>
+            <>
+              <span className="font-mono text-[12px] text-cream">You’re watching the shared demo agent, live.</span>
+              {connected ? (
+                <Link href="/mandate" className="bg-gold px-5 py-2.5 font-sans text-[13px] font-extrabold text-ink">
+                  Arm your own mandate to approve →
+                </Link>
+              ) : (
+                <Link href="/wallet" className="bg-gold px-5 py-2.5 font-sans text-[13px] font-extrabold text-ink">
+                  Connect with Google to start →
+                </Link>
+              )}
+              <span className="ml-auto font-mono text-[11px] text-muted">read-only preview</span>
+            </>
           )}
         </div>
 
