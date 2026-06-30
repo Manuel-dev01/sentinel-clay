@@ -29,14 +29,15 @@ export async function GET(req: Request) {
   const r = redis();
   if (!r || !mandateId) return NextResponse.json({ ok: false, reason: 'not-configured' });
 
-  // Debounce: only the request that wins the lock generates a proposal this window.
-  const got = await r.set(`sentinel:tick:lock:${mandateId}`, '1', { nx: true, ex: LOCK_S });
-  if (got !== 'OK') return NextResponse.json({ ok: true, skipped: true });
-
   const feedKey = `sentinel:feed:${mandateId}`;
   const hbKey = `sentinel:hb:${mandateId}`;
   const now = Date.now();
   try {
+    // Debounce: only the request that wins the lock generates a proposal this window. Inside the try so
+    // a misconfigured Upstash token degrades to a clean JSON error instead of a 500.
+    const got = await r.set(`sentinel:tick:lock:${mandateId}`, '1', { nx: true, ex: LOCK_S });
+    if (got !== 'OK') return NextResponse.json({ ok: true, skipped: true });
+
     const n = await r.incr(`sentinel:tickn:${mandateId}`);
     let p: Proposal;
     if (ROGUE_EVERY > 0 && n % ROGUE_EVERY === 0) {
