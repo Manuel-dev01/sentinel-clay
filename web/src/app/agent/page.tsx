@@ -1,12 +1,12 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import { Transaction } from '@mysten/sui/transactions';
 import { AppShell } from '@/components/AppShell';
 import { useSigner } from '@/lib/signer';
-import { useMandate } from '@/lib/mandateStore';
+import { useMandate, demoMandate } from '@/lib/mandateStore';
 import { readMandate, effectiveSpent, type MandateState } from '@/lib/onchain';
 import { buildChecks, evaluateOnChain, codeLabel, type Check } from '@/lib/predicate';
 import { settleProposal, replaySettle, abortCodeFromError } from '@/lib/settle';
@@ -52,8 +52,16 @@ function abortBanner(code?: number): string {
 }
 
 export default function Dashboard() {
-  const { mandate, setMandate } = useMandate();
+  const { mandate: storeMandate, setMandate } = useMandate();
   const { address, signMessage, signExecute, busy } = useSigner();
+  const connected = !!address;
+  const demo = useMemo(() => demoMandate(), []);
+  // Active mandate is tied to the CONNECTED wallet: your stored mandate only when the connected address
+  // owns it, otherwise the read-only shared demo. A mandate armed by another account never shows as yours.
+  const ownsStore = connected && !!storeMandate && address!.toLowerCase() === storeMandate.owner.toLowerCase();
+  const mandate = ownsStore ? storeMandate! : demo;
+  const isOwner = ownsStore;
+  const canApprove = isOwner;
   const audit = (p: Proposal, verdict: 'APPROVED' | 'ABORTED', code?: number, txDigest?: string) =>
     recordVerdict({ mandateId: mandate!.mandateId, owner: mandate!.owner, signMessage, p, verdict, code, txDigest });
   const [rows, setRows] = useState<Row[]>([]);
@@ -72,11 +80,6 @@ export default function Dashboard() {
   // stream. The page self-drives whichever one is active. Approvable when it's the demo mandate (anyone
   // can mint the DEFAULT_SEED witness) or you own the active mandate. Either way Move re-checks on settle.
   const feedMandate = mandate?.mandateId ?? '';
-  const connected = !!address;
-  const isOwner = !!address && !!mandate && address.toLowerCase() === mandate.owner.toLowerCase();
-  // Only the mandate OWNER can approve. The shared demo agent is a read-only live preview; to approve
-  // trades and see the on-chain abort, a user connects and arms their own mandate (then it's theirs).
-  const canApprove = isOwner;
   const feedQ = useQuery<{ configured: boolean; proposals: (Proposal & { ts: number })[]; heartbeat: Heartbeat | null }>({
     queryKey: ['agentFeed', feedMandate],
     enabled: !!feedMandate,

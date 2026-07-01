@@ -26,7 +26,7 @@ const LS = 'sentinel.mandate';
 // The shared demo mandate, used as the default armed mandate when AGENT_MANDATE_ID is configured so every
 // visitor lands on a working agent (same stream + approvable). Kept in memory (not persisted) so it always
 // reflects the current env. A user arming their own mandate overrides + persists it.
-function demoMandate(): ArmedMandate | null {
+export function demoMandate(): ArmedMandate | null {
   if (!AGENT_MANDATE_ID) return null;
   return {
     registryId: APP_REGISTRY_ID,
