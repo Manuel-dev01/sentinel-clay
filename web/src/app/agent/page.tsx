@@ -253,13 +253,7 @@ export default function Dashboard() {
         <div className="flex flex-wrap items-center gap-3 border border-hairsoft p-4">
           {isOwner ? (
             <>
-              <button
-                onClick={() => propose('propose')}
-                disabled={thinking || busy}
-                className="bg-gold px-5 py-2.5 font-sans text-[13px] font-extrabold text-ink disabled:opacity-60"
-              >
-                {thinking ? 'Agent thinking…' : 'Agent: propose now'}
-              </button>
+              <span className="font-mono text-[12px] text-muted">The agent proposes on its own · trigger a tampered proposal to see the on-chain abort:</span>
               <button
                 onClick={() => propose('tamper', { kind: 'overcap' })}
                 disabled={thinking || busy}
@@ -274,13 +268,9 @@ export default function Dashboard() {
               >
                 ⚠ Tampered agent · replay
               </button>
-              {isOwner ? (
-                <button onClick={revoke} className="ml-auto border border-abort/50 px-4 py-2.5 font-mono text-xs font-bold text-abort hover:bg-abort/10">
-                  Revoke mandate
-                </button>
-              ) : (
-                <span className="ml-auto font-mono text-[11px] text-muted">shared demo mandate · only its owner can revoke</span>
-              )}
+              <button onClick={revoke} className="ml-auto border border-abort/50 px-4 py-2.5 font-mono text-xs font-bold text-abort hover:bg-abort/10">
+                Revoke mandate
+              </button>
             </>
           ) : (
             <>
@@ -305,8 +295,7 @@ export default function Dashboard() {
         <div className="font-mono text-[11px] font-semibold tracking-[0.12em] text-muted">OPEN PROPOSALS</div>
         {rows.length === 0 && (
           <div className="border border-dashed border-hairsoft p-8 text-center font-mono text-[13px] text-dim">
-            No proposals yet. The autonomous Yield Hunter streams them here as it ticks · or click “Agent: propose now”.
-            You approve; Move enforces.
+            No proposals yet. The autonomous Yield Hunter streams them here as it ticks. You approve; Move enforces.
           </div>
         )}
         {rows.map((r, i) => (
