@@ -74,8 +74,8 @@ The agent runs on a tick, not just on a button. The default mode is **self-drivi
 host**: while anyone has the `/agent` page open it pings a debounced route (`/api/agent/tick`) that
 generates one proposal per window and **streams** it to an [Upstash Redis](https://upstash.com) feed the
 page renders live (with an "agent live" heartbeat, no clicks). Every visitor shares the same stream via a
-**shared demo mandate**, and because it was created with the SDK's `DEFAULT_SEED`, any visitor can
-approve a streamed proposal from their own wallet - Move re-checks every settle. See
+**shared demo mandate** shown as a read-only preview; to approve trades (and see the on-chain abort) you
+connect and arm your own mandate in one signature, and the agent then hunts yours. See
 [how it works](architecture.md#the-autonomous-agent-self-driving-no-host-needed).
 
 To enable it, set these (in `web/.env.local`, and in your Vercel project for the deployed site):
@@ -83,13 +83,14 @@ To enable it, set these (in `web/.env.local`, and in your Vercel project for the
 ```bash
 UPSTASH_REDIS_REST_URL=...        # free at https://upstash.com
 UPSTASH_REDIS_REST_TOKEN=...
-AGENT_MANDATE_ID=0x...            # the shared demo mandate (a new_mandate created with DEFAULT_SEED)
+AGENT_MANDATE_ID=0x...            # the shared demo mandate (a new_mandate you created)
 NEXT_PUBLIC_AGENT_MANDATE_ID=0x...   # same id (public)
 NEXT_PUBLIC_AGENT_OWNER=0x...        # its owner (proceeds recipient)
-AGENT_MAX_SUI=0.05                   # cap proposal size so any faucet user can afford to approve
+AGENT_MAX_SUI=0.05                   # cap proposal size so it stays affordable to approve
 ```
 
-Without these the feed is simply empty and the manual propose button still works. For a **truly
+Without these the live feed is simply empty; arming your own mandate still works for the manual abort
+demos. For a **truly
 always-on** loop (so the stream advances even with nobody viewing), the [`agent/`](../agent) package is
 the same loop as a standalone worker - run it locally for free (`pnpm --filter @sentinel/agent dev`) or
 host it ([`agent/render.yaml`](../agent/render.yaml) is a Render Background Worker blueprint; note Render

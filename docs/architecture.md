@@ -94,14 +94,15 @@ Render Background Worker blueprint), but it is optional.
   /agent page ──poll ~3s──▶ /api/agent/feed ◀──read── Upstash ⇒ live stream; you Approve ⇒ Move enforces
 ```
 
-The same stream is shared by every visitor via a **shared demo mandate** (the app's default), created
-with the SDK's deterministic `DEFAULT_SEED` so *any* browser can mint the valid one-shot witness and
-approve a streamed proposal - the approver signs with their own wallet, proceeds are bound to the
-mandate owner, and Move re-checks. (A leaked `DEFAULT_SEED` is not a key: it can only ever settle
-policy-compliant trades against that one mandate.)
+Every visitor sees the same stream via a **shared demo mandate** (the app's default), shown as a
+**read-only live preview**: it hunts on a project demo treasury and, like everything here, holds no key.
+To actually approve trades and see the on-chain abort, you connect and **arm your own mandate** in one
+signature - the agent then hunts *your* mandate (its owner is your address), and only you can approve or
+revoke it. The active mandate is tied to the connected wallet, so a mandate you don't own never shows as
+yours or drives the feed.
 
 Crucially this changes **nothing** about custody: the tick only proposes (pure data). Settlement
-still requires your signature, and `payment::pay` re-checks the mandate on-chain. The worker can be off,
+still requires your signature, and `payment::pay` re-checks the mandate on-chain. The agent can be off,
 asleep, or compromised and your funds remain bounded by Move.
 
 ## The Sui stack
