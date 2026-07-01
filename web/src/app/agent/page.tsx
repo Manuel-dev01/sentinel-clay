@@ -222,11 +222,11 @@ export default function Dashboard() {
 
   return (
     <AppShell
-      title="Yield Hunter v2"
+      title={isOwner ? 'Yield Hunter v2' : 'Yield Hunter v2 · shared demo'}
       subtitle={
         isOwner
-          ? 'armed · hunting · the agent proposes, you sign, Move enforces'
-          : 'live demo · the agent hunts autonomously · connect + arm your mandate to approve'
+          ? 'your mandate · hunting · the agent proposes, you sign, Move enforces'
+          : 'shared demo (read-only) · hunts on the project demo treasury, holds no key · connect + arm your mandate to run your own'
       }
     >
       <div className="flex flex-col gap-4 p-[30px]">

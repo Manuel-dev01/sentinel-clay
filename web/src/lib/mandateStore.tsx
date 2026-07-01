@@ -58,9 +58,14 @@ export function MandateProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const setMandate = (m: ArmedMandate | null) => {
-    set(m);
-    if (m) localStorage.setItem(LS, JSON.stringify(m));
-    else localStorage.removeItem(LS);
+    if (m) {
+      set(m);
+      localStorage.setItem(LS, JSON.stringify(m));
+    } else {
+      // Clearing (e.g. after revoke) falls back to the shared demo preview, not a blank state.
+      localStorage.removeItem(LS);
+      set(demoMandate());
+    }
   };
 
   return <Ctx.Provider value={{ mandate, setMandate }}>{children}</Ctx.Provider>;
