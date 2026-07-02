@@ -253,30 +253,34 @@ export default function Dashboard() {
         <LiveFeedBanner hb={feedQ.data?.heartbeat ?? null} configured={feedQ.data?.configured} />
 
         {/* controls - interactive only for the mandate OWNER; the shared demo is a read-only preview */}
-        <div className="flex flex-wrap items-center gap-3 border border-hairsoft p-4">
+        <div className="border border-hairsoft p-4">
           {isOwner ? (
             <>
-              <span className="font-mono text-[12px] text-muted">The agent proposes on its own · trigger a tampered proposal to see the on-chain abort:</span>
-              <button
-                onClick={() => propose('tamper', { kind: 'overcap' })}
-                disabled={thinking || busy}
-                className="border border-abort/50 px-4 py-2.5 font-mono text-xs font-bold text-abort hover:bg-abort/10"
-              >
-                ⚠ Tampered agent · over-cap
-              </button>
-              <button
-                onClick={() => propose('tamper', { kind: 'replay' })}
-                disabled={thinking || busy}
-                className="border border-abort/50 px-4 py-2.5 font-mono text-xs font-bold text-abort hover:bg-abort/10"
-              >
-                ⚠ Tampered agent · replay
-              </button>
-              <button onClick={revoke} className="ml-auto border border-abort/50 px-4 py-2.5 font-mono text-xs font-bold text-abort hover:bg-abort/10">
-                Revoke mandate
-              </button>
+              <div className="mb-3 font-mono text-[12px] text-muted">
+                The agent proposes on its own · trigger a tampered proposal to see the on-chain abort:
+              </div>
+              <div className="flex flex-wrap items-center gap-3">
+                <button
+                  onClick={() => propose('tamper', { kind: 'overcap' })}
+                  disabled={thinking || busy}
+                  className="border border-abort/50 px-4 py-2.5 font-mono text-xs font-bold text-abort hover:bg-abort/10"
+                >
+                  ⚠ Tampered agent · over-cap
+                </button>
+                <button
+                  onClick={() => propose('tamper', { kind: 'replay' })}
+                  disabled={thinking || busy}
+                  className="border border-abort/50 px-4 py-2.5 font-mono text-xs font-bold text-abort hover:bg-abort/10"
+                >
+                  ⚠ Tampered agent · replay
+                </button>
+                <button onClick={revoke} className="ml-auto border border-abort/50 px-4 py-2.5 font-mono text-xs font-bold text-abort hover:bg-abort/10">
+                  Revoke mandate
+                </button>
+              </div>
             </>
           ) : (
-            <>
+            <div className="flex flex-wrap items-center gap-3">
               <span className="font-mono text-[12px] text-cream">You’re watching the shared demo agent, live.</span>
               {connected ? (
                 <Link href="/mandate" className="bg-gold px-5 py-2.5 font-sans text-[13px] font-extrabold text-ink">
@@ -288,7 +292,7 @@ export default function Dashboard() {
                 </Link>
               )}
               <span className="ml-auto font-mono text-[11px] text-muted">read-only preview</span>
-            </>
+            </div>
           )}
         </div>
 
